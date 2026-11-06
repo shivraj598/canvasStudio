@@ -10,6 +10,9 @@ export interface EngineInput {
   signal: AbortSignal;
 }
 
+/** Output text in the artifact protocol, or a piece of the model's reasoning (not saved). */
+export type EngineChunk = string | { reasoning: string };
+
 /**
  * A build engine streams raw output in the artifact protocol (see `createArtifactParser`):
  * chat prose plus `<canvasArtifact>` / `<canvasAction>` blocks with whole-file contents.
@@ -17,7 +20,7 @@ export interface EngineInput {
  */
 export interface BuildEngine {
   info: EngineInfo;
-  stream(input: EngineInput): AsyncIterable<string>;
+  stream(input: EngineInput): AsyncIterable<EngineChunk>;
 }
 
 export class EngineError extends Error {

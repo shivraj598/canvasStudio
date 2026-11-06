@@ -1,6 +1,8 @@
 import cors from '@fastify/cors';
 import { createClaudeEngine } from './ai/claude.js';
 import { createLocalEngine } from './ai/local/engine.js';
+import { createNimEngine } from './ai/nim.js';
+import { loadPromptLibrary } from './ai/prompts.js';
 import type { BuildEngine } from './ai/types.js';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { authPlugin } from './auth/plugin.js';
@@ -24,8 +26,19 @@ export interface BuildAppOptions {
 }
 
 export function createEngine(config: AppConfig): BuildEngine {
-  if (config.ai.engine === 'claude') {
+  const { ai } = config;
+  if (ai.engine === 'nim') {
+    if (!ai.nvidia.apiKey) throw new Error('AI_ENGINE=nim needs NVIDIA_API_KEY');
+    return createNimEngine({
+      library: loadPromptLibrary(),
+      apiKey: ai.nvidia.apiKey,
+      model: ai.nvidia.model,
+      baseUrl: ai.nvidia.baseUrl,
+    });
+  }
+  if (ai.engine === 'claude') {
     return createClaudeEngine({
+      library: loadPromptLibrary(),
       apiKey: config.ai.anthropicApiKey,
       model: config.ai.model,
       effort: config.ai.effort,

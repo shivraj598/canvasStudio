@@ -1,7 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
 import { createClaudeEngine, toMessages } from './claude.js';
+import { loadPromptLibrary } from './prompts.js';
 import { EngineError } from './types.js';
+
+const library = loadPromptLibrary();
 
 function fakeClient(texts: string[], stopReason = 'end_turn') {
   const stream = vi.fn(() => ({
@@ -31,7 +34,7 @@ async function run(engine: ReturnType<typeof createClaudeEngine>) {
 describe('Claude engine', () => {
   it('streams text deltas and sends the current files with the request', async () => {
     const { client, stream } = fakeClient(['Sure', ' thing']);
-    const out = await run(createClaudeEngine({ client }));
+    const out = await run(createClaudeEngine({ client, library }));
     expect(out).toBe('Sure thing');
     const [params] = stream.mock.calls[0] as unknown as [Anthropic.Beta.MessageCreateParams];
     expect(params.model).toBe('claude-opus-5-5');
@@ -41,14 +44,32 @@ describe('Claude engine', () => {
     expect(last.content).toContain('<request>\nMake it blue\n</request>');
   });
 
+  it('uses the system prompt file and attaches clinic references to a fresh clinic build', async () => {
+    const { client, stream } = fakeClient(['ok']);
+    const engine = createClaudeEngine({ client, library });
+    for await (const _ of engine.stream({
+      prompt: 'A website for my dental clinic',
+      history: [],
+      files: [],
+      signal: new AbortController().signal,
+    }))
+      void _;
+    const [params] = stream.mock.calls[0] as unknown as [Anthropic.Beta.MessageCreateParams];
+    expect(JSON.stringify(params.system)).toContain('You are Canvas');
+    const content = params.messages.at(-1)!.content as Anthropic.Beta.BetaContentBlockParam[];
+    expect(content.filter((b) => b.type === 'image')).toHaveLength(2);
+    expect(JSON.stringify(content)).toContain('<design_reference name=\\"Clinic & healthcare\\">');
+  });
+
   it('turns a refusal into a friendly error', async () => {
     const { client } = fakeClient(['No'], 'refusal');
-    await expect(run(createClaudeEngine({ client }))).rejects.toBeInstanceOf(EngineError);
+    await expect(run(createClaudeEngine({ client, library }))).rejects.toBeInstanceOf(EngineError);
   });
 
   it('keeps history short and starting with a user turn', () => {
     const at = '2026-01-01T00:00:00.000Z';
     const messages = toMessages(
+      library,
       [
         { id: '1', role: 'assistant', content: 'Restored', createdAt: at },
         { id: '2', role: 'user', content: 'Build a cafe', createdAt: at },

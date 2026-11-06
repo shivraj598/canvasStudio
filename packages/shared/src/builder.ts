@@ -41,7 +41,7 @@ export interface ProjectVersion {
   files: ProjectFile[];
 }
 
-export type EngineId = 'claude' | 'local';
+export type EngineId = 'claude' | 'nim' | 'local';
 
 export interface EngineInfo {
   id: EngineId;
@@ -66,6 +66,8 @@ export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type BuildEvent<P = unknown> =
   | { type: 'start'; userMessage: ChatMessage; assistantMessageId: string; engine: EngineInfo }
   | { type: 'text'; delta: string }
+  /** The model's thinking, shown while it works and not saved. */
+  | { type: 'reasoning'; delta: string }
   | { type: 'file_start'; path: string; operation: FileOperation }
   | { type: 'file_delta'; path: string; delta: string }
   | { type: 'file_end'; path: string }

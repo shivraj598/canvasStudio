@@ -127,7 +127,8 @@ export async function runBuild({
       signal,
     })) {
       if (signal.aborted) break;
-      parser.write(chunk);
+      if (typeof chunk === 'string') parser.write(chunk);
+      else emit({ type: 'reasoning', delta: chunk.reasoning });
     }
     parser.end();
     if (signal.aborted) status = 'stopped';
@@ -148,6 +149,8 @@ export async function runBuild({
   const createdAt = now().toISOString();
   // A failed turn changes nothing; a stopped one keeps the files that finished writing.
   const applied = status !== 'error' && changes.size > 0;
+  // Drop stray fence lines a model may leave around the artifact.
+  prose = prose.replace(/^[ \t]*```[\w-]*[ \t]*$/gm, '').replace(/\n{3,}/g, '\n\n');
   const content =
     prose.trim() ||
     (status === 'stopped' ? 'Stopped.' : status === 'complete' && !applied ? 'Done.' : '');

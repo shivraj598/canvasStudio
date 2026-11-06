@@ -1,3 +1,5 @@
 pnpm-lock.yaml
 dist
 coverage
+# Prompt files are read by models verbatim.
+apps/api/prompts/**/*.md
