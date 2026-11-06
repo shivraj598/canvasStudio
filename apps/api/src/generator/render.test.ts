@@ -54,7 +54,12 @@ describe('renderSiteFiles', () => {
   const files = renderSiteFiles(spec);
 
   it('renders one HTML document per page', () => {
-    expect(Object.keys(files)).toEqual(['index.html', 'about.html', 'services.html', 'contact.html']);
+    expect(Object.keys(files)).toEqual([
+      'index.html',
+      'about.html',
+      'services.html',
+      'contact.html',
+    ]);
     for (const doc of Object.values(files)) {
       expect(doc.trimStart().startsWith('<!doctype html>')).toBe(true);
       expect(doc).toContain('<meta name="viewport"');

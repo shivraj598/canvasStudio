@@ -65,10 +65,12 @@ describe('project CRUD', () => {
     await createProject('Café site');
     const res = await app.inject({ url: '/api/projects', headers: auth });
     expect(res.statusCode).toBe(200);
-    expect(res.json().projects.map((p: Project) => p.name).sort()).toEqual([
-      'Café site',
-      'Clinic site',
-    ]);
+    expect(
+      res
+        .json()
+        .projects.map((p: Project) => p.name)
+        .sort(),
+    ).toEqual(['Café site', 'Clinic site']);
   });
 
   it('fetches, renames and deletes a project', async () => {
@@ -85,7 +87,11 @@ describe('project CRUD', () => {
     });
     expect(renamed.json().project.name).toBe('New name');
 
-    const deleted = await app.inject({ method: 'DELETE', url: `/api/projects/${id}`, headers: auth });
+    const deleted = await app.inject({
+      method: 'DELETE',
+      url: `/api/projects/${id}`,
+      headers: auth,
+    });
     expect(deleted.statusCode).toBe(204);
     expect((await app.inject({ url: `/api/projects/${id}`, headers: auth })).statusCode).toBe(404);
   });
@@ -150,7 +156,8 @@ describe('PUT /api/projects/:id/answers', () => {
       code: 'VALIDATION_ERROR',
       details: { step: 'about', fields: { description: expect.any(String) } },
     });
-    const project = (await app.inject({ url: `/api/projects/${id}`, headers: auth })).json().project;
+    const project = (await app.inject({ url: `/api/projects/${id}`, headers: auth })).json()
+      .project;
     expect(project.answers).toEqual({});
   });
 

@@ -15,7 +15,11 @@ function renderPage(api = createFakeApi()) {
   );
 }
 
-const draft = makeProject({ id: 'p1', name: 'Sunrise Dental', completedSteps: ['brand', 'category'] });
+const draft = makeProject({
+  id: 'p1',
+  name: 'Sunrise Dental',
+  completedSteps: ['brand', 'category'],
+});
 const generated = makeProject({ id: 'p2', name: 'Café Luna', status: 'generated' });
 
 describe('ProjectsPage', () => {

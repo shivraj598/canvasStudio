@@ -31,7 +31,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) =>
-    reply.status(404).send(errorBody('NOT_FOUND', `Route ${request.method} ${request.url} not found`)),
+    reply
+      .status(404)
+      .send(errorBody('NOT_FOUND', `Route ${request.method} ${request.url} not found`)),
   );
 
   await app.register(

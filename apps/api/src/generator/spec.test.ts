@@ -92,10 +92,9 @@ describe('buildSiteSpec', () => {
   });
 
   it('falls back to the first sentence of the description when there is no tagline', () => {
-    const noTagline = buildSiteSpec(
-      withAnswers({ brand: { brandName: 'Sunrise Dental' } }),
-      { now },
-    );
+    const noTagline = buildSiteSpec(withAnswers({ brand: { brandName: 'Sunrise Dental' } }), {
+      now,
+    });
     expect(noTagline.pages[0]?.sections[0]?.body).toBe(
       'A family dental clinic offering check-ups, whitening and braces since 2009.',
     );

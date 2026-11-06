@@ -39,7 +39,9 @@ describe('summarizeStep', () => {
       { label: 'Dashboard', value: 'Not now' },
     ]);
     expect(
-      summarizeStep('category', { category: { category: 'other', customCategory: 'Pet grooming' } }),
+      summarizeStep('category', {
+        category: { category: 'other', customCategory: 'Pet grooming' },
+      }),
     ).toEqual([{ label: 'Category', value: 'Pet grooming' }]);
     expect(
       summarizeStep('design', {

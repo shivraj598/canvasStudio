@@ -91,9 +91,9 @@ describe('GET /api/auth/me', () => {
 
   it('rejects missing, unknown and expired tokens', async () => {
     expect((await app.inject({ url: '/api/auth/me' })).statusCode).toBe(401);
-    expect(
-      (await app.inject({ url: '/api/auth/me', headers: bearer('made-up') })).statusCode,
-    ).toBe(401);
+    expect((await app.inject({ url: '/api/auth/me', headers: bearer('made-up') })).statusCode).toBe(
+      401,
+    );
 
     let clock = new Date('2026-01-01T00:00:00Z');
     const shortLived = await buildApp({
@@ -112,9 +112,15 @@ describe('GET /api/auth/me', () => {
 describe('POST /api/auth/logout', () => {
   it('invalidates the session', async () => {
     const { token } = await signIn(app);
-    const res = await app.inject({ method: 'POST', url: '/api/auth/logout', headers: bearer(token) });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: bearer(token),
+    });
     expect(res.statusCode).toBe(204);
-    expect((await app.inject({ url: '/api/auth/me', headers: bearer(token) })).statusCode).toBe(401);
+    expect((await app.inject({ url: '/api/auth/me', headers: bearer(token) })).statusCode).toBe(
+      401,
+    );
   });
 
   it('succeeds even when not signed in', async () => {

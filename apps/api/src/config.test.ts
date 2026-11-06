@@ -28,7 +28,9 @@ describe('loadConfig', () => {
 
   it('enables an OAuth provider only when id and secret are both set', () => {
     expect(loadConfig({ GOOGLE_CLIENT_ID: 'id' }).oauth.google).toBeNull();
-    expect(loadConfig({ GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: '' }).oauth.google).toBeNull();
+    expect(
+      loadConfig({ GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: '' }).oauth.google,
+    ).toBeNull();
     expect(
       loadConfig({ GITHUB_CLIENT_ID: 'id', GITHUB_CLIENT_SECRET: 'secret' }).oauth.github,
     ).toEqual({ clientId: 'id', clientSecret: 'secret' });

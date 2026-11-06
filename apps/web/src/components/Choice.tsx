@@ -17,12 +17,18 @@ interface BaseProps<T extends string> {
   columns?: 2 | 3 | 4;
 }
 
-const COLUMNS = { 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-2 lg:grid-cols-3', 4: 'sm:grid-cols-2 lg:grid-cols-4' };
+const COLUMNS = {
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-2 lg:grid-cols-3',
+  4: 'sm:grid-cols-2 lg:grid-cols-4',
+};
 
 function cardClass(checked: boolean, disabled?: boolean) {
   return [
     'flex cursor-pointer gap-3 rounded-xl border p-4 text-left transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand-600',
-    checked ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600' : 'border-gray-200 bg-white hover:border-gray-300',
+    checked
+      ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
+      : 'border-gray-200 bg-white hover:border-gray-300',
     disabled ? 'cursor-not-allowed opacity-60' : '',
   ].join(' ');
 }

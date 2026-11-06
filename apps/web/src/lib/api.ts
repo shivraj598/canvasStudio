@@ -74,7 +74,11 @@ export function createApiClient({
     try {
       res = await fetchImpl(`${baseUrl}${path}`, { ...init, headers });
     } catch {
-      throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach Canvas Studio. Check your connection.');
+      throw new ApiError(
+        0,
+        'NETWORK_ERROR',
+        'Could not reach Canvas Studio. Check your connection.',
+      );
     }
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
@@ -112,8 +116,9 @@ export function createApiClient({
     },
     async createProject(name?: string) {
       const payload = name ? { name } : {};
-      return (await json<{ project: Project }>('/projects', { method: 'POST', body: body(payload) }))
-        .project;
+      return (
+        await json<{ project: Project }>('/projects', { method: 'POST', body: body(payload) })
+      ).project;
     },
     async getProject(id: string) {
       return (await json<{ project: Project }>(`/projects/${id}`)).project;

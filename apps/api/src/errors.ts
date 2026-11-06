@@ -55,9 +55,7 @@ export function errorHandler(
   reply: FastifyReply,
 ) {
   if (error instanceof AppError) {
-    return reply
-      .status(error.statusCode)
-      .send(errorBody(error.code, error.message, error.details));
+    return reply.status(error.statusCode).send(errorBody(error.code, error.message, error.details));
   }
   if (error instanceof ZodError) {
     const appError = validationError(error);
@@ -65,7 +63,8 @@ export function errorHandler(
       .status(appError.statusCode)
       .send(errorBody(appError.code, appError.message, appError.details));
   }
-  const statusCode = 'statusCode' in error && typeof error.statusCode === 'number' ? error.statusCode : 500;
+  const statusCode =
+    'statusCode' in error && typeof error.statusCode === 'number' ? error.statusCode : 500;
   if (statusCode >= 500) {
     request.log.error(error);
     return reply.status(500).send(errorBody('INTERNAL_ERROR', 'Something went wrong'));

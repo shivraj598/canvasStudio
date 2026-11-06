@@ -66,10 +66,16 @@ export function PreviewPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{state.project.name}</h1>
-          <p className="mt-1 text-gray-600">Here is your website. Like it? Publishing is coming soon.</p>
+          <p className="mt-1 text-gray-600">
+            Here is your website. Like it? Publishing is coming soon.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div role="group" aria-label="Preview size" className="flex rounded-lg border border-gray-300 bg-white p-0.5">
+          <div
+            role="group"
+            aria-label="Preview size"
+            className="flex rounded-lg border border-gray-300 bg-white p-0.5"
+          >
             {DEVICES.map((d) => (
               <button
                 key={d.id}

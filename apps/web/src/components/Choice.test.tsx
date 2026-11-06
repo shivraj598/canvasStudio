@@ -13,7 +13,13 @@ describe('RadioCards', () => {
   it('selects a single option', async () => {
     const onChange = vi.fn();
     render(
-      <RadioCards name="fruit" legend="Fruit" options={[...options]} value="a" onChange={onChange} />,
+      <RadioCards
+        name="fruit"
+        legend="Fruit"
+        options={[...options]}
+        value="a"
+        onChange={onChange}
+      />,
     );
     expect(screen.getByRole('group', { name: 'Fruit' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Apple' })).toBeChecked();
@@ -45,7 +51,14 @@ describe('CheckboxCards', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Apple' }));
     expect(onChange).toHaveBeenLastCalledWith(['a', 'b']);
 
-    rerender(<CheckboxCards legend="Fruit" options={[...options]} value={['a', 'b']} onChange={onChange} />);
+    rerender(
+      <CheckboxCards
+        legend="Fruit"
+        options={[...options]}
+        value={['a', 'b']}
+        onChange={onChange}
+      />,
+    );
     await userEvent.click(screen.getByRole('checkbox', { name: /Banana/ }));
     expect(onChange).toHaveBeenLastCalledWith(['a']);
   });

@@ -85,7 +85,9 @@ describe('BuilderPage', () => {
     await userEvent.type(await screen.findByLabelText('Brand or business name'), 'Café Luna');
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByRole('heading', { name: 'What kind of business?' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'What kind of business?' }),
+    ).toBeInTheDocument();
     expect(api.saveStep).toHaveBeenCalledWith(
       'p1',
       'brand',

@@ -46,7 +46,10 @@ describe('BrandStep', () => {
     expect(screen.queryByAltText('Logo preview')).not.toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText(/Logo URL/));
     await userEvent.type(screen.getByLabelText(/Logo URL/), 'https://example.com/logo.png');
-    expect(screen.getByAltText('Logo preview')).toHaveAttribute('src', 'https://example.com/logo.png');
+    expect(screen.getByAltText('Logo preview')).toHaveAttribute(
+      'src',
+      'https://example.com/logo.png',
+    );
   });
 
   it('shows field errors', () => {
@@ -82,7 +85,9 @@ describe('GoalsStep', () => {
   it('selects goals', async () => {
     const latest = renderStep('goals');
     await userEvent.click(screen.getByRole('checkbox', { name: 'Sell online' }));
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Get more bookings or appointments' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'Get more bookings or appointments' }),
+    );
     expect(latest.value.goals).toEqual(['get-bookings', 'sell-online']);
   });
 });
@@ -125,7 +130,11 @@ describe('DesignStep', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Forest' }));
     await userEvent.click(screen.getByRole('radio', { name: /Playful/ }));
     await userEvent.click(screen.getByRole('radio', { name: /Editorial/ }));
-    expect(latest.value).toMatchObject({ paletteId: 'forest', style: 'playful', font: 'editorial' });
+    expect(latest.value).toMatchObject({
+      paletteId: 'forest',
+      style: 'playful',
+      font: 'editorial',
+    });
   });
 
   it('seeds custom colours from the previous preset', async () => {

@@ -35,17 +35,30 @@ async function createProject(answers: Partial<typeof completeAnswers> = complete
 describe('POST /api/projects/:id/generate', () => {
   it('generates a site from a complete questionnaire', async () => {
     const id = await createProject();
-    const res = await app.inject({ method: 'POST', url: `/api/projects/${id}/generate`, headers: auth });
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/projects/${id}/generate`,
+      headers: auth,
+    });
     expect(res.statusCode).toBe(200);
     const project: Project = res.json().project;
     expect(project.status).toBe('generated');
     expect(project.site?.brand.name).toBe('Sunrise Dental');
-    expect(project.site?.pages.map((p) => p.slug)).toEqual(['index', 'about', 'services', 'contact']);
+    expect(project.site?.pages.map((p) => p.slug)).toEqual([
+      'index',
+      'about',
+      'services',
+      'contact',
+    ]);
   });
 
   it('refuses to generate until every step is complete', async () => {
     const id = await createProject({ brand: completeAnswers.brand, about: completeAnswers.about });
-    const res = await app.inject({ method: 'POST', url: `/api/projects/${id}/generate`, headers: auth });
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/projects/${id}/generate`,
+      headers: auth,
+    });
     expect(res.statusCode).toBe(409);
     expect(res.json().error.details.missingSteps).toEqual([
       'category',
@@ -86,7 +99,11 @@ describe('POST /api/projects/:id/generate', () => {
   it('requires ownership', async () => {
     const id = await createProject();
     const other = bearer((await signIn(app, 'other@example.com', 'Other')).token);
-    const res = await app.inject({ method: 'POST', url: `/api/projects/${id}/generate`, headers: other });
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/projects/${id}/generate`,
+      headers: other,
+    });
     expect(res.statusCode).toBe(404);
   });
 });

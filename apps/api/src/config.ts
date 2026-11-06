@@ -8,7 +8,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
-  SESSION_TTL_HOURS: z.coerce.number().positive().default(24 * 7),
+  SESSION_TTL_HOURS: z.coerce
+    .number()
+    .positive()
+    .default(24 * 7),
   GOOGLE_CLIENT_ID: optionalSecret,
   GOOGLE_CLIENT_SECRET: optionalSecret,
   GITHUB_CLIENT_ID: optionalSecret,

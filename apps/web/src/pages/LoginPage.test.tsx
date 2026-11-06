@@ -12,7 +12,10 @@ const PROVIDERS = [
   { id: 'dev', label: 'Developer sign-in', enabled: true },
 ] as const;
 
-function renderLogin(api = createFakeApi({ providers: async () => [...PROVIDERS] }), state?: unknown) {
+function renderLogin(
+  api = createFakeApi({ providers: async () => [...PROVIDERS] }),
+  state?: unknown,
+) {
   return renderWithProviders(
     <Routes>
       <Route path="/login" element={<LoginPage />} />

@@ -79,8 +79,9 @@ describe('validateStep', () => {
       expect(result.success).toBe(false);
       if (!result.success) expect(result.fieldErrors.customCategory).toBeDefined();
 
-      expect(validateStep('category', { category: 'other', customCategory: 'Pet grooming' }))
-        .toMatchObject({ success: true });
+      expect(
+        validateStep('category', { category: 'other', customCategory: 'Pet grooming' }),
+      ).toMatchObject({ success: true });
     });
 
     it('rejects unknown categories', () => {

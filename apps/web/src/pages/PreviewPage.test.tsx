@@ -8,10 +8,12 @@ import { PreviewPage } from './PreviewPage';
 
 const HTML = '<!doctype html><h1>Sunrise Dental</h1>';
 
-function renderPreview(api = createFakeApi({
-  getProject: async () => makeProject({ id: 'p1', status: 'generated' }),
-  previewHtml: async () => HTML,
-})) {
+function renderPreview(
+  api = createFakeApi({
+    getProject: async () => makeProject({ id: 'p1', status: 'generated' }),
+    previewHtml: async () => HTML,
+  }),
+) {
   renderWithProviders(
     <Routes>
       <Route path="/projects/:id/preview" element={<PreviewPage />} />

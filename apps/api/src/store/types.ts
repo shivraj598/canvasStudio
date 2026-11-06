@@ -37,7 +37,9 @@ export interface SessionRepository {
   delete(token: string): Promise<void>;
 }
 
-export type ProjectPatch = Partial<Pick<Project, 'name' | 'status' | 'answers' | 'completedSteps' | 'site'>>;
+export type ProjectPatch = Partial<
+  Pick<Project, 'name' | 'status' | 'answers' | 'completedSteps' | 'site'>
+>;
 
 export interface ProjectRepository {
   create(input: { ownerId: string; name: string }): Promise<Project>;

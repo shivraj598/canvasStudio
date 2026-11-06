@@ -47,7 +47,9 @@ export function createFakeApi(overrides: Partial<ApiClient> = {}): Mocked<ApiCli
     'generate',
     'previewHtml',
   ];
-  const api = Object.fromEntries(methods.map((m) => [m, notMocked(m)])) as unknown as Mocked<ApiClient>;
+  const api = Object.fromEntries(
+    methods.map((m) => [m, notMocked(m)]),
+  ) as unknown as Mocked<ApiClient>;
   // Only called when a session token is stored; default to the test user.
   api.me = vi.fn().mockResolvedValue(testUser);
   for (const [key, value] of Object.entries(overrides)) {

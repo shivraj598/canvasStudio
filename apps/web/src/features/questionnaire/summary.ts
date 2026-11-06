@@ -27,7 +27,13 @@ export function summarizeStep(step: StepId, draft: QuestionnaireDraft): SummaryR
   switch (step) {
     case 'brand': {
       const a = draft.brand;
-      return a ? rows([['Name', a.brandName], ['Tagline', a.tagline], ['Logo', a.logoUrl]]) : [];
+      return a
+        ? rows([
+            ['Name', a.brandName],
+            ['Tagline', a.tagline],
+            ['Logo', a.logoUrl],
+          ])
+        : [];
     }
     case 'category': {
       const a = draft.category;
@@ -79,7 +85,9 @@ export function summarizeStep(step: StepId, draft: QuestionnaireDraft): SummaryR
       const a = draft.design;
       if (!a) return [];
       const palette =
-        a.paletteId === 'custom' ? 'Custom colours' : (getPalettePreset(a.paletteId)?.name ?? a.paletteId);
+        a.paletteId === 'custom'
+          ? 'Custom colours'
+          : (getPalettePreset(a.paletteId)?.name ?? a.paletteId);
       return rows([
         ['Palette', palette],
         ['Style', a.style[0]!.toUpperCase() + a.style.slice(1)],

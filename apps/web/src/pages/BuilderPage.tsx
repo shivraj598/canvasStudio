@@ -74,7 +74,10 @@ function StepNav({
               screen === 'review' ? 'bg-brand-50 font-medium text-brand-700' : 'hover:bg-gray-100'
             }`}
           >
-            <span aria-hidden className="grid size-6 place-items-center rounded-full border border-gray-300 text-xs">
+            <span
+              aria-hidden
+              className="grid size-6 place-items-center rounded-full border border-gray-300 text-xs"
+            >
               ★
             </span>
             Review & generate
@@ -115,7 +118,11 @@ function Review({
               <h2 id={`review-${step.id}`} className="font-semibold">
                 {step.title}
               </h2>
-              <Button variant="ghost" onClick={() => onEdit(step.id)} aria-label={`Edit ${step.title}`}>
+              <Button
+                variant="ghost"
+                onClick={() => onEdit(step.id)}
+                aria-label={`Edit ${step.title}`}
+              >
                 Edit
               </Button>
             </div>
@@ -172,7 +179,8 @@ export function BuilderPage() {
         setScreen(getNextIncompleteStep(p.answers) ?? 'review');
       })
       .catch((e: unknown) => {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not load this website');
+        if (!cancelled)
+          setLoadError(e instanceof Error ? e.message : 'Could not load this website');
       });
     return () => {
       cancelled = true;

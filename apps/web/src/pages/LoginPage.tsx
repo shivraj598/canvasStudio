@@ -90,14 +90,20 @@ export function LoginPage() {
                 >
                   {Icon && <Icon />}
                   {provider.label}
-                  {!provider.enabled && <span className="text-xs text-gray-400">(coming soon)</span>}
+                  {!provider.enabled && (
+                    <span className="text-xs text-gray-400">(coming soon)</span>
+                  )}
                 </Button>
               );
             })}
           </div>
 
           {devEnabled && (
-            <form onSubmit={handleDevLogin} className="mt-6 space-y-4 border-t border-gray-100 pt-6" noValidate>
+            <form
+              onSubmit={handleDevLogin}
+              className="mt-6 space-y-4 border-t border-gray-100 pt-6"
+              noValidate
+            >
               <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
                 Developer sign-in
               </p>

@@ -12,7 +12,9 @@ const FEATURE_OPTIONS = SITE_FEATURES.map((id) => ({ value: id, label: FEATURE_L
 
 export function PagesStep({ value, onChange, errors, draft }: StepProps<'pages'>) {
   const pages = value.pages ?? ['home'];
-  const categoryLabel = draft.category ? 'We pre-selected pages that suit your business.' : undefined;
+  const categoryLabel = draft.category
+    ? 'We pre-selected pages that suit your business.'
+    : undefined;
   return (
     <div className="space-y-8">
       <CheckboxCards
