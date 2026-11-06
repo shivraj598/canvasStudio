@@ -58,7 +58,7 @@ export function createFakeApi(overrides: Partial<ApiClient> = {}): Mocked<ApiCli
 
 export interface RenderOptions {
   api?: Mocked<ApiClient>;
-  route?: string;
+  route?: string | { pathname: string; state?: unknown };
   /** Pretend a session token is already stored; `api.me` decides who it belongs to. */
   signedIn?: boolean;
 }
