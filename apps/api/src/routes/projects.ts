@@ -38,10 +38,11 @@ export const projectRoutes: FastifyPluginAsync = async (app) => {
 
   app.post('/projects', async (request, reply) => {
     const user = requireUser(request);
-    const { name } = parseOrThrow(createProjectSchema, request.body ?? {});
+    const { name, prompt } = parseOrThrow(createProjectSchema, request.body ?? {});
     const project = await app.store.projects.create({
       ownerId: user.id,
       name: name ?? DEFAULT_PROJECT_NAME,
+      prompt,
     });
     return reply.status(201).send({ project });
   });

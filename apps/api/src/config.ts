@@ -16,6 +16,15 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalSecret,
   GITHUB_CLIENT_ID: optionalSecret,
   GITHUB_CLIENT_SECRET: optionalSecret,
+  /** Enables the Claude build engine. Without it, the offline engine is used. */
+  ANTHROPIC_API_KEY: optionalSecret,
+  ANTHROPIC_MODEL: z.preprocess(blankToUndefined, z.string().optional()),
+  ANTHROPIC_EFFORT: z.preprocess(
+    blankToUndefined,
+    z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('medium'),
+  ),
+  /** Force an engine. Defaults to `claude` when an API key is set, else `local`. */
+  AI_ENGINE: z.preprocess(blankToUndefined, z.enum(['claude', 'local']).optional()),
 });
 
 export interface OAuthClientConfig {
@@ -35,6 +44,12 @@ export interface AppConfig {
   };
   /** Password-less dev login. Never enabled in production. */
   devLoginEnabled: boolean;
+  ai: {
+    engine: 'claude' | 'local';
+    anthropicApiKey?: string;
+    model?: string;
+    effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  };
 }
 
 function oauthClient(id?: string, secret?: string): OAuthClientConfig | null {
@@ -56,5 +71,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       github: oauthClient(parsed.GITHUB_CLIENT_ID, parsed.GITHUB_CLIENT_SECRET),
     },
     devLoginEnabled: parsed.NODE_ENV !== 'production',
+    ai: {
+      engine: parsed.AI_ENGINE ?? (parsed.ANTHROPIC_API_KEY ? 'claude' : 'local'),
+      anthropicApiKey: parsed.ANTHROPIC_API_KEY,
+      model: parsed.ANTHROPIC_MODEL,
+      effort: parsed.ANTHROPIC_EFFORT,
+    },
   };
 }

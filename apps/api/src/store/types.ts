@@ -38,11 +38,22 @@ export interface SessionRepository {
 }
 
 export type ProjectPatch = Partial<
-  Pick<Project, 'name' | 'status' | 'answers' | 'completedSteps' | 'site'>
+  Pick<
+    Project,
+    | 'name'
+    | 'status'
+    | 'answers'
+    | 'completedSteps'
+    | 'site'
+    | 'files'
+    | 'messages'
+    | 'versions'
+    | 'currentVersionId'
+  >
 >;
 
 export interface ProjectRepository {
-  create(input: { ownerId: string; name: string }): Promise<Project>;
+  create(input: { ownerId: string; name: string; prompt?: string }): Promise<Project>;
   findById(id: string): Promise<Project | null>;
   /** Most recently updated first. */
   listByOwner(ownerId: string): Promise<Project[]>;

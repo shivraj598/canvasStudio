@@ -2,6 +2,8 @@ import { STEP_IDS, getCompletedSteps, isQuestionnaireComplete } from '@canvas/sh
 import type { FastifyPluginAsync } from 'fastify';
 import { AppError } from '../errors.js';
 import { renderSinglePage } from '../generator/index.js';
+import { randomUUID } from 'node:crypto';
+import { nextVersion } from '../ai/build.js';
 import { loadOwnedProject } from './projects.js';
 
 /**
@@ -31,7 +33,22 @@ export const generateRoutes: FastifyPluginAsync = async (app) => {
       });
     }
     const site = await app.generator.generate(answers);
-    const updated = await app.store.projects.update(project.id, { site, status: 'generated' });
+    // The guided setup feeds the same file-based workspace as the chat builder.
+    const files = [{ path: 'index.html', content: renderSinglePage(site) }];
+    const { version, versions } = nextVersion(
+      project,
+      files,
+      'Generated from guided setup',
+      new Date().toISOString(),
+      randomUUID(),
+    );
+    const updated = await app.store.projects.update(project.id, {
+      site,
+      status: 'generated',
+      files,
+      versions,
+      currentVersionId: version.id,
+    });
     return { project: updated };
   });
 

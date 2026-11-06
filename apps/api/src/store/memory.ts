@@ -63,7 +63,7 @@ export function createMemoryStore({ now = () => new Date() }: MemoryStoreOptions
     },
 
     projects: {
-      async create({ ownerId, name }) {
+      async create({ ownerId, name, prompt }) {
         const timestamp = now().toISOString();
         const project: Project = {
           id: randomUUID(),
@@ -73,6 +73,11 @@ export function createMemoryStore({ now = () => new Date() }: MemoryStoreOptions
           answers: {},
           completedSteps: [],
           site: null,
+          prompt: prompt ?? null,
+          files: [],
+          messages: [],
+          versions: [],
+          currentVersionId: null,
           createdAt: timestamp,
           updatedAt: timestamp,
         };
