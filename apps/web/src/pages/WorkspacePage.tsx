@@ -29,7 +29,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
-import { Tooltip } from '../components/ui/tooltip';
+import { Tooltip, TooltipProvider } from '../components/ui/tooltip';
 import { ChatPanel } from '../features/builder/ChatPanel';
 import { CodePane } from '../features/builder/CodePane';
 import { downloadZip, openPreviewInNewTab } from '../features/builder/files';
@@ -442,5 +442,10 @@ export function WorkspacePage() {
     );
   }
 
-  return <Workspace key={state.project.id} initial={state.project} autoPrompt={autoPrompt} />;
+  // Tooltips only live in the workspace, so their provider (and floating-ui) loads with it.
+  return (
+    <TooltipProvider>
+      <Workspace key={state.project.id} initial={state.project} autoPrompt={autoPrompt} />
+    </TooltipProvider>
+  );
 }
