@@ -70,3 +70,31 @@ answers ──buildSiteSpec()──▶ SiteSpec ──renderSinglePage()──�
   `/projects/:id/preview`.
 - The wizard (`BuilderPage`) keeps local form state per step, validates with the shared
   schema, saves each step and re-initialises from what the server stored.
+
+## Chat builder
+
+```
+prompt ─▶ POST /projects/:id/chat ─▶ runBuild() ─▶ BuildEngine.stream()  (Claude | Canvas Local)
+                │                         │
+                │ SSE: start, text,       └─▶ createArtifactParser(): prose ↔ <canvasAction> files
+                │ file_start/delta/end,        ─▶ apply files, record version, save messages
+                ▼ done/error
+       useBuild() in the workspace ─▶ chat, live code view, sandboxed preview
+```
+
+- **Projects are files.** `Project.files` holds the current site; `messages` the conversation;
+  `versions` full snapshots (capped at 50). Restoring a version records it as a new version.
+- **Artifact protocol.** Engines stream prose plus `<canvasArtifact>` / `<canvasAction
+type="file" path="…">` blocks with whole-file contents (the approach Bolt uses). The parser in
+  `@canvas/shared` handles tags split across chunks. Paths are validated (`isSafePath`), and
+  files/sizes are capped.
+- **Engines** (`apps/api/src/ai`). The Claude engine streams `claude-opus-5-5` with the current
+  files in every request and opts into the API's refusal fallback. Canvas Local turns prompts into
+  a `site.config.json` model (`intent.ts`) and renders it (`render.ts`), so follow-ups edit
+  structured data rather than HTML. The Claude engine deletes that file when it rewrites the page.
+- **Streaming.** The route hijacks the reply to write server-sent events, sends a heartbeat while
+  the model thinks, allows one build per project, and aborts the engine if the client
+  disconnects (completed files are kept). Leaving the page without stopping lets the build finish.
+- **Preview isolation.** Generated sites may run scripts, so they are rendered from `srcdoc` in an
+  iframe with `allow-scripts` but never `allow-same-origin`; “open in new tab” wraps the site in a
+  sandboxed iframe for the same reason.
