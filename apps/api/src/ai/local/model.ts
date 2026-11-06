@@ -1,9 +1,31 @@
 /**
- * The local engine's site model. It is saved alongside the HTML as `site.config.json`, so a
- * follow-up message can be applied to structured data and the page re-rendered, instead of
- * patching HTML.
+ * The local engine's site model. It is saved in the project as `site.config.json`, so a
+ * follow-up message is applied to structured data and the project re-rendered, instead of
+ * patching code.
  */
-import type { IconId } from './icons.js';
+
+/** Icon names; the React template maps them to lucide-react icons. */
+export type IconId =
+  | 'check'
+  | 'arrow'
+  | 'star'
+  | 'heart'
+  | 'shield'
+  | 'zap'
+  | 'clock'
+  | 'calendar'
+  | 'users'
+  | 'smile'
+  | 'pin'
+  | 'mail'
+  | 'globe'
+  | 'award'
+  | 'trend'
+  | 'layers'
+  | 'sun'
+  | 'coffee'
+  | 'book'
+  | 'box';
 
 export const ACCENTS = [
   'violet',

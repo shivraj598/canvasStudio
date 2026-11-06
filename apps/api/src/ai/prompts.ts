@@ -9,7 +9,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
-import { TAILWIND_CDN } from './local/render.js';
+import { TAILWIND_CDN } from '@canvas/shared';
 
 export interface ReferenceImage {
   file: string;

@@ -80,7 +80,7 @@ describe('POST /api/projects/:id/chat (local engine)', () => {
     const { events } = await chat(project.id, 'Make it dark');
     const v2 = (events.at(-1) as { project: Project }).project;
     expect(v2.versions).toHaveLength(2);
-    expect(v2.messages[3]!.changes).toContainEqual({ path: 'index.html', operation: 'update' });
+    expect(v2.messages[3]!.changes).toContainEqual({ path: 'src/index.css', operation: 'update' });
     const v1 = v2.versions[0]!;
 
     const res = await app.inject({
