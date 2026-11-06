@@ -1,14 +1,23 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ApiError, tokenStore } from '../lib/api';
 import { createFakeApi, renderWithProviders, testUser } from '../test/utils';
-import { useAuth, type AuthContextValue } from './AuthContext';
-
-let auth: AuthContextValue;
+import { useAuth } from './AuthContext';
 
 function Probe() {
-  auth = useAuth();
-  return <p>status:{auth.state.status} user:{auth.state.user?.name ?? '-'}</p>;
+  const { state, signInWithDev, signOut } = useAuth();
+  return (
+    <>
+      <p>
+        status:{state.status} user:{state.user?.name ?? '-'}
+      </p>
+      <button onClick={() => signInWithDev({ email: testUser.email, name: 'Asha' })}>
+        sign in
+      </button>
+      <button onClick={() => signOut()}>sign out</button>
+    </>
+  );
 }
 
 describe('AuthProvider', () => {
@@ -39,8 +48,8 @@ describe('AuthProvider', () => {
   it('signs in with dev login and stores the token', async () => {
     const api = createFakeApi({ devLogin: async () => ({ token: 'new-token', user: testUser }) });
     renderWithProviders(<Probe />, { api });
-    await act(() => auth.signInWithDev({ email: testUser.email, name: 'Asha' }));
-    expect(screen.getByText('status:authenticated user:Asha')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'sign in' }));
+    expect(await screen.findByText('status:authenticated user:Asha')).toBeInTheDocument();
     expect(tokenStore.get()).toBe('new-token');
   });
 
@@ -52,8 +61,8 @@ describe('AuthProvider', () => {
     });
     renderWithProviders(<Probe />, { api, signedIn: true });
     await screen.findByText(/authenticated/);
-    await act(() => auth.signOut());
-    await waitFor(() => expect(screen.getByText('status:anonymous user:-')).toBeInTheDocument());
+    await userEvent.click(screen.getByRole('button', { name: 'sign out' }));
+    expect(await screen.findByText('status:anonymous user:-')).toBeInTheDocument();
     expect(tokenStore.get()).toBeNull();
   });
 });

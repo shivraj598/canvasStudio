@@ -1,5 +1,5 @@
 import { STEP_IDS, type Project } from '@canvas/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { useApi } from '../lib/ApiContext';
@@ -31,17 +31,30 @@ export function ProjectsPage() {
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    setState({ status: 'loading' });
+  // Bumped by "Try again" to re-run the load effect.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
     api
       .listProjects()
-      .then((projects) => setState({ status: 'ready', projects }))
-      .catch((e: unknown) =>
-        setState({ status: 'error', message: e instanceof Error ? e.message : 'Failed to load' }),
-      );
-  }, [api]);
+      .then((projects) => {
+        if (!cancelled) setState({ status: 'ready', projects });
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setState({ status: 'error', message: e instanceof Error ? e.message : 'Failed to load' });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, reloadKey]);
 
-  useEffect(load, [load]);
+  function retry() {
+    setState({ status: 'loading' });
+    setReloadKey((k) => k + 1);
+  }
 
   async function handleCreate() {
     setCreating(true);
@@ -97,7 +110,7 @@ export function ProjectsPage() {
       {state.status === 'error' && (
         <div role="alert" className="mt-10 rounded-xl border border-red-200 bg-red-50 p-6">
           <p className="text-red-700">{state.message}</p>
-          <Button variant="secondary" className="mt-4" onClick={load}>
+          <Button variant="secondary" className="mt-4" onClick={retry}>
             Try again
           </Button>
         </div>
