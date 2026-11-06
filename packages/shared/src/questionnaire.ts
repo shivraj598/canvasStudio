@@ -13,7 +13,14 @@ import {
 } from './categories.js';
 import { HEX_COLOR_PATTERN, PALETTE_PRESET_IDS } from './palettes.js';
 
-export const DESIGN_STYLES = ['modern', 'classic', 'minimal', 'playful', 'elegant', 'bold'] as const;
+export const DESIGN_STYLES = [
+  'modern',
+  'classic',
+  'minimal',
+  'playful',
+  'elegant',
+  'bold',
+] as const;
 export type DesignStyle = (typeof DESIGN_STYLES)[number];
 
 export const FONT_PAIRINGS = {
@@ -33,14 +40,18 @@ const webUrl = (message = 'Must be a valid http(s) URL') =>
   z.url({ protocol: /^https?$/, message });
 
 export const brandStepSchema = z.object({
-  brandName: z.string().trim().min(2, 'Brand name must be at least 2 characters').max(80),
+  brandName: z
+    .string({ error: 'Brand name is required' })
+    .trim()
+    .min(2, 'Brand name must be at least 2 characters')
+    .max(80),
   tagline: optionalText(140),
   logoUrl: webUrl('Logo must be a valid URL').optional(),
 });
 
 export const categoryStepSchema = z
   .object({
-    category: z.enum(BUSINESS_CATEGORIES),
+    category: z.enum(BUSINESS_CATEGORIES, { error: 'Choose a category' }),
     customCategory: optionalText(80),
   })
   .refine((v) => v.category !== 'other' || (v.customCategory?.length ?? 0) >= 2, {
@@ -50,7 +61,7 @@ export const categoryStepSchema = z
 
 export const aboutStepSchema = z.object({
   description: z
-    .string()
+    .string({ error: 'Tell us what you do' })
     .trim()
     .min(20, 'Tell us a little more — at least 20 characters')
     .max(1000),
@@ -60,14 +71,16 @@ export const aboutStepSchema = z.object({
 });
 
 export const goalsStepSchema = z.object({
-  goals: z.array(z.enum(WEBSITE_GOALS)).min(1, 'Pick at least one goal'),
+  goals: z
+    .array(z.enum(WEBSITE_GOALS), { error: 'Pick at least one goal' })
+    .min(1, 'Pick at least one goal'),
   expectations: optionalText(1000),
   inspiration: optionalText(500),
 });
 
 export const pagesStepSchema = z.object({
   pages: z
-    .array(z.enum(SITE_PAGES))
+    .array(z.enum(SITE_PAGES), { error: 'Pick at least one page' })
     .min(1, 'Pick at least one page')
     .transform((pages) => (pages.includes('home') ? pages : ['home' as const, ...pages]))
     .transform((pages) => [...new Set(pages)]),
@@ -76,7 +89,7 @@ export const pagesStepSchema = z.object({
 
 export const dashboardStepSchema = z
   .object({
-    wantsDashboard: z.boolean(),
+    wantsDashboard: z.boolean({ error: 'Choose yes or no' }),
     widgets: z.array(z.enum(DASHBOARD_WIDGETS)).default([]),
   })
   .refine((v) => !v.wantsDashboard || v.widgets.length > 0, {
@@ -95,10 +108,10 @@ export const colorPaletteSchema = z.object({
 
 export const designStepSchema = z
   .object({
-    paletteId: z.enum([...PALETTE_PRESET_IDS, 'custom']),
+    paletteId: z.enum([...PALETTE_PRESET_IDS, 'custom'], { error: 'Choose a colour palette' }),
     customPalette: colorPaletteSchema.optional(),
-    style: z.enum(DESIGN_STYLES),
-    font: z.enum(FONT_PAIRING_IDS),
+    style: z.enum(DESIGN_STYLES, { error: 'Choose a style' }),
+    font: z.enum(FONT_PAIRING_IDS, { error: 'Choose a font pairing' }),
   })
   .refine((v) => v.paletteId !== 'custom' || v.customPalette !== undefined, {
     message: 'Choose your custom colours',
@@ -226,8 +239,7 @@ export function stripEmptyStrings<T>(value: T): T {
 }
 
 export type StepValidationResult<S extends StepId> =
-  | { success: true; data: StepAnswers<S> }
-  | { success: false; fieldErrors: Record<string, string> };
+  { success: true; data: StepAnswers<S> } | { success: false; fieldErrors: Record<string, string> };
 
 /** Validates one step's raw form data. Field errors are keyed by dotted path. */
 export function validateStep<S extends StepId>(id: S, raw: unknown): StepValidationResult<S> {

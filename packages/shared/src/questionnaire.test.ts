@@ -186,6 +186,24 @@ describe('validateStep', () => {
   });
 });
 
+describe('friendly messages for missing answers', () => {
+  it.each([
+    ['brand', { brandName: '' }, 'brandName', 'Brand name is required'],
+    ['category', {}, 'category', 'Choose a category'],
+    ['about', { description: '   ' }, 'description', 'Tell us what you do'],
+    ['goals', {}, 'goals', 'Pick at least one goal'],
+    ['pages', {}, 'pages', 'Pick at least one page'],
+    ['dashboard', {}, 'wantsDashboard', 'Choose yes or no'],
+    ['design', {}, 'paletteId', 'Choose a colour palette'],
+    ['design', {}, 'style', 'Choose a style'],
+    ['design', {}, 'font', 'Choose a font pairing'],
+  ] as const)('%s.%s', (step, data, field, message) => {
+    const result = validateStep(step, data);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.fieldErrors[field]).toBe(message);
+  });
+});
+
 describe('progress helpers', () => {
   it('reports nothing completed for an empty draft', () => {
     expect(getCompletedSteps({})).toEqual([]);
