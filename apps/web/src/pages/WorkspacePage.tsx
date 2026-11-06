@@ -358,6 +358,11 @@ function Workspace({ initial, autoPrompt }: { initial: Project; autoPrompt?: str
               turn={turn}
               name={project.name}
               dragging={dragging}
+              onFixError={(message) =>
+                void send(
+                  `The preview shows this error. Please find the cause and fix it:\n\n${message}`,
+                )
+              }
             />
           )}
         </main>

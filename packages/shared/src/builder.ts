@@ -93,7 +93,8 @@ export function isSafePath(path: string): boolean {
   );
 }
 
-export type FileLanguage = 'markup' | 'css' | 'javascript' | 'json' | 'markdown' | 'text';
+export type FileLanguage =
+  'markup' | 'css' | 'javascript' | 'jsx' | 'typescript' | 'tsx' | 'json' | 'markdown' | 'text';
 
 export function fileLanguage(path: string): FileLanguage {
   const ext = path.split('.').pop()?.toLowerCase();
@@ -106,10 +107,15 @@ export function fileLanguage(path: string): FileLanguage {
       return 'css';
     case 'js':
     case 'mjs':
-    case 'ts':
-    case 'jsx':
-    case 'tsx':
+    case 'cjs':
       return 'javascript';
+    case 'jsx':
+      return 'jsx';
+    case 'ts':
+    case 'mts':
+      return 'typescript';
+    case 'tsx':
+      return 'tsx';
     case 'json':
       return 'json';
     case 'md':

@@ -173,9 +173,16 @@ function LiveTurn({ build }: { build: BuildController }) {
         <AssistantAvatar busy />
         <div className="min-w-0 flex-1">
           {thinking ? (
-            <p className="text-shimmer text-sm font-medium">
-              {build.engine?.id === 'claude' ? 'Thinking…' : 'Planning your site…'}
-            </p>
+            <div>
+              <p className="text-shimmer text-sm font-medium">
+                {build.engine?.id === 'local' ? 'Planning your site…' : 'Thinking…'}
+              </p>
+              {turn.reasoning && (
+                <p className="mt-2 line-clamp-3 border-l-2 pl-3 text-xs leading-relaxed text-muted-foreground italic">
+                  {turn.reasoning.slice(-320)}
+                </p>
+              )}
+            </div>
           ) : (
             <Markdown text={turn.text} />
           )}

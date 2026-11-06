@@ -22,6 +22,8 @@ export interface Turn {
   prompt: string;
   userMessage?: ChatMessage;
   text: string;
+  /** The model's thinking so far (tail only; never saved). */
+  reasoning: string;
   files: LiveFile[];
   /** The file being written right now. */
   activePath: string | null;
@@ -34,6 +36,8 @@ function reduce(turn: Turn | null, event: BuildEvent<Project>): Turn | null {
       return { ...turn, userMessage: event.userMessage };
     case 'text':
       return { ...turn, text: turn.text + event.delta };
+    case 'reasoning':
+      return { ...turn, reasoning: (turn.reasoning + event.delta).slice(-1200) };
     case 'file_start':
       return {
         ...turn,
@@ -99,7 +103,7 @@ export function useBuild(initial: Project) {
       if (!prompt || controllerRef.current) return;
       const controller = new AbortController();
       controllerRef.current = controller;
-      setTurn({ prompt, text: '', files: [], activePath: null });
+      setTurn({ prompt, text: '', reasoning: '', files: [], activePath: null });
 
       let settled = false;
       try {

@@ -1,5 +1,15 @@
 import { fileLanguage, sortFiles, type ProjectFile } from '@canvas/shared';
-import { Check, Copy, FileCode2, FileJson, FileText, Palette } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  Copy,
+  FileCode2,
+  FileJson,
+  FileText,
+  Folder,
+  FolderOpen,
+  Palette,
+} from 'lucide-react';
 import { Highlight, themes } from 'prism-react-renderer';
 import { useDeferredValue, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,17 +26,126 @@ function FileIcon({ path, className }: { path: string; className?: string }) {
       ? 'text-orange-400'
       : lang === 'css'
         ? 'text-sky-400'
-        : lang === 'javascript'
-          ? 'text-yellow-400'
-          : 'text-zinc-400';
+        : lang === 'typescript' || lang === 'tsx'
+          ? 'text-blue-400'
+          : lang === 'javascript' || lang === 'jsx'
+            ? 'text-yellow-400'
+            : 'text-zinc-400';
   return <Icon className={cn('size-3.5 shrink-0', tone, className)} />;
+}
+
+interface TreeNode {
+  name: string;
+  path: string;
+  folders: TreeNode[];
+  files: ProjectFile[];
+}
+
+/** Nests paths into folders: folders first, then files, each alphabetically (index.html first). */
+export function buildTree(files: ProjectFile[]): TreeNode {
+  const root: TreeNode = { name: '', path: '', folders: [], files: [] };
+  for (const file of files) {
+    const parts = file.path.split('/');
+    let node = root;
+    for (const part of parts.slice(0, -1)) {
+      const path = node.path ? `${node.path}/${part}` : part;
+      let next = node.folders.find((f) => f.name === part);
+      if (!next) {
+        next = { name: part, path, folders: [], files: [] };
+        node.folders.push(next);
+        node.folders.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      node = next;
+    }
+    node.files.push(file);
+  }
+  return root;
+}
+
+function FileTree({
+  node,
+  depth,
+  current,
+  writing,
+  onSelect,
+}: {
+  node: TreeNode;
+  depth: number;
+  current: string;
+  writing: string | null;
+  onSelect(path: string): void;
+}) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const pad = { paddingLeft: `${8 + depth * 12}px` };
+  return (
+    <ul className="space-y-0.5">
+      {node.folders.map((folder) => {
+        const open = !collapsed[folder.path];
+        return (
+          <li key={folder.path}>
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setCollapsed((c) => ({ ...c, [folder.path]: open }))}
+              style={pad}
+              className="flex w-full items-center gap-1.5 rounded-md py-1.5 pr-2 text-left font-mono text-[12px] text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200"
+            >
+              <ChevronRight
+                className={cn('size-3 shrink-0 transition-transform', open && 'rotate-90')}
+              />
+              {open ? (
+                <FolderOpen className="size-3.5 shrink-0 text-zinc-500" />
+              ) : (
+                <Folder className="size-3.5 shrink-0 text-zinc-500" />
+              )}
+              <span className="truncate">{folder.name}</span>
+            </button>
+            {open && (
+              <FileTree
+                node={folder}
+                depth={depth + 1}
+                current={current}
+                writing={writing}
+                onSelect={onSelect}
+              />
+            )}
+          </li>
+        );
+      })}
+      {node.files.map((f) => (
+        <li key={f.path}>
+          <button
+            type="button"
+            onClick={() => onSelect(f.path)}
+            aria-current={f.path === current ? 'true' : undefined}
+            title={f.path}
+            style={{ paddingLeft: `${8 + depth * 12 + 16}px` }}
+            className={cn(
+              'flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left font-mono text-[12px] text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200',
+              f.path === current && 'bg-white/[0.07] text-zinc-100',
+            )}
+          >
+            <FileIcon path={f.path} />
+            <span className="min-w-0 flex-1 truncate">{f.path.split('/').pop()}</span>
+            {f.path === writing && (
+              <span className="size-1.5 animate-pulse rounded-full bg-sig-2" />
+            )}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 const PRISM_LANG = {
   markup: 'markup',
   css: 'css',
   javascript: 'javascript',
+  jsx: 'jsx',
+  typescript: 'typescript',
+  tsx: 'tsx',
   json: 'json',
+  markdown: 'markdown',
 } as const;
 
 function CodeView({ file, streaming }: { file: ProjectFile; streaming: boolean }) {
@@ -115,28 +234,13 @@ export function CodePane({ files, turn }: { files: ProjectFile[]; turn: Turn | n
         <p className="px-2 pt-1 pb-2 text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">
           Files
         </p>
-        <ul className="space-y-0.5">
-          {sorted.map((f) => {
-            const isWriting = f.path === writing;
-            return (
-              <li key={f.path}>
-                <button
-                  type="button"
-                  onClick={() => setSelected(f.path)}
-                  aria-current={f.path === current.path ? 'true' : undefined}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-mono text-[12px] text-zinc-400 transition hover:bg-white/5 hover:text-zinc-200',
-                    f.path === current.path && 'bg-white/[0.07] text-zinc-100',
-                  )}
-                >
-                  <FileIcon path={f.path} />
-                  <span className="min-w-0 flex-1 truncate">{f.path}</span>
-                  {isWriting && <span className="size-1.5 animate-pulse rounded-full bg-sig-2" />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <FileTree
+          node={buildTree(sorted)}
+          depth={0}
+          current={current.path}
+          writing={writing}
+          onSelect={setSelected}
+        />
       </nav>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-10 shrink-0 items-center gap-2 border-b border-white/5 px-3">

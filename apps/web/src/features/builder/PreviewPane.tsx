@@ -1,10 +1,13 @@
-import { bundlePreview, type ProjectFile } from '@canvas/shared';
-import { Check, Globe, LoaderCircle, Lock, MousePointerClick } from 'lucide-react';
+import type { ProjectFile } from '@canvas/shared';
+import { Check, Globe, LoaderCircle, Lock, MousePointerClick, Wand2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../../components/ui/button';
 import { cn, slugify } from '../../lib/utils';
 import { PREVIEW_SANDBOX } from './files';
+import { PREVIEW_ERROR_MESSAGE } from './reactPreview';
 import type { Turn } from './useBuild';
+import { usePreviewHtml } from './usePreviewHtml';
 
 export const DEVICES = {
   desktop: { label: 'Desktop', width: '100%' },
@@ -90,6 +93,7 @@ export function PreviewPane({
   turn,
   name,
   dragging,
+  onFixError,
 }: {
   files: ProjectFile[];
   device: Device;
@@ -97,10 +101,30 @@ export function PreviewPane({
   turn: Turn | null;
   name: string;
   dragging?: boolean;
+  /** Sends a runtime error from the preview to the AI. */
+  onFixError?(message: string): void;
 }) {
-  const html = useMemo(() => (files.length ? bundlePreview(files) : ''), [files]);
+  const html = usePreviewHtml(files);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const [error, setError] = useState<{ html: string; message: string } | null>(null);
 
-  if (!html) return turn ? <BuildingState turn={turn} /> : <EmptyPreview />;
+  // The sandboxed site reports runtime errors with postMessage; only trust our own frame.
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.source !== frameRef.current?.contentWindow) return;
+      const data = event.data as { type?: string; message?: unknown } | null;
+      if (data?.type === PREVIEW_ERROR_MESSAGE && typeof data.message === 'string' && html) {
+        setError({ html, message: data.message });
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [html]);
+  // An error belongs to the document that raised it.
+  const visibleError = error && error.html === html && !turn ? error.message : null;
+
+  if (files.length === 0) return turn ? <BuildingState turn={turn} /> : <EmptyPreview />;
+  if (html === null) return <BuildingState turn={turn} />;
 
   const mobile = device === 'mobile';
   return (
@@ -131,6 +155,7 @@ export function PreviewPane({
           </div>
         )}
         <iframe
+          ref={frameRef}
           key={refreshKey}
           title={`Preview of ${name}`}
           srcDoc={html}
@@ -139,6 +164,35 @@ export function PreviewPane({
           className={cn('min-h-0 w-full flex-1 bg-white', dragging && 'pointer-events-none')}
         />
         <AnimatePresence>
+          {visibleError && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              role="alert"
+              className="absolute inset-x-3 bottom-3 flex items-start gap-3 rounded-xl border border-destructive/25 bg-card p-3 shadow-xl"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">The preview hit an error</p>
+                <p className="mt-0.5 line-clamp-2 font-mono text-xs text-muted-foreground">
+                  {visibleError.split('\n')[0]}
+                </p>
+              </div>
+              {onFixError && (
+                <Button size="sm" onClick={() => onFixError(visibleError)}>
+                  <Wand2 /> Fix it
+                </Button>
+              )}
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Dismiss"
+                onClick={() => setError(null)}
+              >
+                <X />
+              </Button>
+            </motion.div>
+          )}
           {turn && (
             <motion.div
               initial={{ opacity: 0, y: -6 }}

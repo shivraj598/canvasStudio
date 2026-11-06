@@ -1,6 +1,6 @@
-import { STEP_IDS, bundlePreview, type Project } from '@canvas/shared';
+import { STEP_IDS, type Project } from '@canvas/shared';
 import { ArrowRight, ClipboardList, Ellipsis, FolderOpen, Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useAuth } from '../auth/AuthContext';
@@ -16,6 +16,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Skeleton } from '../components/ui/skeleton';
 import { PREVIEW_SANDBOX } from '../features/builder/files';
+import { usePreviewHtml } from '../features/builder/usePreviewHtml';
 import { useApi } from '../lib/ApiContext';
 import { timeAgo } from '../lib/utils';
 
@@ -37,7 +38,7 @@ const THUMB_WIDTH = 1280;
 function Thumbnail({ project }: { project: Project }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.25);
-  const html = useMemo(() => bundlePreview(project.files), [project.files]);
+  const html = usePreviewHtml(project.files);
 
   useEffect(() => {
     const el = ref.current;
@@ -53,7 +54,7 @@ function Thumbnail({ project }: { project: Project }) {
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <iframe
         title={`Thumbnail of ${project.name}`}
-        srcDoc={html}
+        srcDoc={html ?? ''}
         sandbox={PREVIEW_SANDBOX}
         loading="lazy"
         tabIndex={-1}
