@@ -180,6 +180,25 @@ describe('runBuild', () => {
     expect(events.some((e) => e.type === 'file_start' && e.path.includes('evil'))).toBe(false);
   });
 
+  it('adds packages the model imported but forgot to declare', async () => {
+    const result = await runBuild({
+      ...opts,
+      engine: scriptedEngine([
+        'Done. <canvasArtifact>',
+        '<canvasAction type="file" path="package.json">{"name":"x","dependencies":{"react":"^19.1.0"}}</canvasAction>',
+        '<canvasAction type="file" path="src/App.tsx">import clsx from \'clsx\';</canvasAction>',
+        '</canvasArtifact>',
+      ]),
+      project: { ...baseProject, files: [] },
+      prompt: 'build it',
+      signal: new AbortController().signal,
+      emit: () => {},
+    });
+    const pkg = result.patch.files!.find((f) => f.path === 'package.json')!;
+    expect(JSON.parse(pkg.content).dependencies.clsx).toBe('^2.1.1');
+    expect(result.patch.messages?.[1]?.content).toContain('Added `clsx` to package.json');
+  });
+
   it('keeps files unchanged and explains when the engine fails', async () => {
     const result = await runBuild({
       ...opts,

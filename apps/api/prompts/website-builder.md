@@ -5,7 +5,8 @@ Every website is a real npm project. Use exactly this stack and nothing else:
 - React 19 + TypeScript (strict), function components and hooks only.
 - Vite 7 as the dev server and bundler.
 - Tailwind CSS v4 through the official Vite plugin (`@tailwindcss/vite`), configured in CSS — there is no tailwind.config.js.
-- lucide-react for icons.
+- lucide-react for icons. Only import icons you are sure exist, for example: ArrowRight, Award, BadgeCheck, Calendar, CalendarCheck, Check, CheckCircle2, ChevronDown, ChevronRight, Clock, Facebook, Globe, Heart, HeartPulse, Instagram, Linkedin, Mail, MapPin, Menu, MessageSquare, Phone, Quote, Shield, ShieldCheck, Smile, Sparkles, Star, Stethoscope, Twitter, User, Users, X, Zap. There is no "Tooth" icon — use Smile or Sparkles for dental.
+- Every package you import must be listed in package.json.
 Allowed npm packages: react, react-dom, lucide-react, clsx, react-router-dom. Do not add any other package. No other frameworks (no Next.js, Vue, Angular, jQuery, Bootstrap), no CSS-in-JS, no UI kits. Backend work (Node.js + Express, Supabase) comes later; for now build the frontend only, with no network calls — forms should validate and show a friendly success state.
 </stack>
 

@@ -18,6 +18,7 @@ import {
   type ProjectVersion,
 } from '@canvas/shared';
 import type { ProjectPatch } from '../store/types.js';
+import { reconcileDependencies } from './fixups.js';
 import { EngineError, type BuildEngine } from './types.js';
 
 export const MAX_FILE_BYTES = 512 * 1024;
@@ -143,6 +144,22 @@ export async function runBuild({
           ? e.message
           : 'Something went wrong while building. Please try again.';
       if (!(e instanceof EngineError)) onUnexpectedError?.(e);
+    }
+  }
+
+  // Fix slips a build tool would reject (e.g. imports missing from package.json).
+  if (status !== 'error' && changes.size > 0) {
+    const fixup = reconcileDependencies([...files].map(([path, c]) => ({ path, content: c })));
+    if (fixup) {
+      const { path, content: fixed } = fixup.file;
+      emit({ type: 'file_start', path, operation: original.has(path) ? 'update' : 'create' });
+      emit({ type: 'file_delta', path, delta: fixed });
+      emit({ type: 'file_end', path });
+      files.set(path, fixed);
+      changes.set(path, original.has(path) ? 'update' : 'create');
+      const note = `\n\n_${fixup.note}_`;
+      prose += note;
+      emit({ type: 'text', delta: note });
     }
   }
 
