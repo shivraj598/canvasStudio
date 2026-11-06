@@ -1,5 +1,12 @@
 /** Request/response contracts shared by the API and the web client. */
 import { z } from 'zod';
+import {
+  MAX_PROMPT_LENGTH,
+  type ChatMessage,
+  type EngineInfo,
+  type ProjectFile,
+  type ProjectVersion,
+} from './builder.js';
 import { STEP_IDS, type QuestionnaireDraft, type StepId } from './questionnaire.js';
 import type { SiteSpec } from './site-spec.js';
 
@@ -41,12 +48,21 @@ export interface Project {
   answers: QuestionnaireDraft;
   completedSteps: StepId[];
   site: SiteSpec | null;
+  /** The prompt the project was started from, if any. */
+  prompt: string | null;
+  /** The current files of the generated website. */
+  files: ProjectFile[];
+  messages: ChatMessage[];
+  /** Oldest first. */
+  versions: ProjectVersion[];
+  currentVersionId: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export const createProjectSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
+  prompt: z.string().trim().min(1).max(MAX_PROMPT_LENGTH).optional(),
 });
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 
@@ -55,6 +71,10 @@ export const saveStepSchema = z.object({
   data: z.unknown(),
 });
 export type SaveStepInput = z.infer<typeof saveStepSchema>;
+
+export interface BuilderInfo {
+  engine: EngineInfo;
+}
 
 export interface ApiErrorBody {
   error: {
