@@ -35,8 +35,19 @@ const envSchema = z.object({
   NVIDIA_API_KEY: optionalSecret,
   NVIDIA_MODEL: z.preprocess(blankToUndefined, z.string().optional()),
   NVIDIA_BASE_URL: z.preprocess(blankToUndefined, z.url().optional()),
-  /** Force an engine. Default: nim with an NVIDIA key, else claude with an Anthropic key, else local. */
-  AI_ENGINE: z.preprocess(blankToUndefined, z.enum(['nim', 'claude', 'local']).optional()),
+  /** Enables the Google Gemini build engine (AI Studio key, Interactions API). */
+  GEMINI_API_KEY: optionalSecret,
+  GEMINI_MODEL: z.preprocess(blankToUndefined, z.string().optional()),
+  /** Comma-separated models tried when the main one is overloaded or out of quota. */
+  GEMINI_FALLBACK_MODELS: z.preprocess(blankToUndefined, z.string().optional()),
+  /**
+   * Force an engine. Default: gemini with a Gemini key, else nim with an NVIDIA key, else claude
+   * with an Anthropic key, else local.
+   */
+  AI_ENGINE: z.preprocess(
+    blankToUndefined,
+    z.enum(['gemini', 'nim', 'claude', 'local']).optional(),
+  ),
 });
 
 export interface OAuthClientConfig {
@@ -67,11 +78,12 @@ export interface AppConfig {
   /** Supabase when URL + service-role key are set, else memory in tests and SQLite otherwise. */
   store: StoreConfig;
   ai: {
-    engine: 'nim' | 'claude' | 'local';
+    engine: 'gemini' | 'nim' | 'claude' | 'local';
     anthropicApiKey?: string;
     model?: string;
     effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
     nvidia: { apiKey?: string; model?: string; baseUrl?: string };
+    gemini: { apiKey?: string; model?: string; fallbackModels?: string[] };
   };
 }
 
@@ -111,7 +123,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ai: {
       engine:
         parsed.AI_ENGINE ??
-        (parsed.NVIDIA_API_KEY ? 'nim' : parsed.ANTHROPIC_API_KEY ? 'claude' : 'local'),
+        (parsed.GEMINI_API_KEY
+          ? 'gemini'
+          : parsed.NVIDIA_API_KEY
+            ? 'nim'
+            : parsed.ANTHROPIC_API_KEY
+              ? 'claude'
+              : 'local'),
       anthropicApiKey: parsed.ANTHROPIC_API_KEY,
       model: parsed.ANTHROPIC_MODEL,
       effort: parsed.ANTHROPIC_EFFORT,
@@ -119,6 +137,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         apiKey: parsed.NVIDIA_API_KEY,
         model: parsed.NVIDIA_MODEL,
         baseUrl: parsed.NVIDIA_BASE_URL,
+      },
+      gemini: {
+        apiKey: parsed.GEMINI_API_KEY,
+        model: parsed.GEMINI_MODEL,
+        fallbackModels: parsed.GEMINI_FALLBACK_MODELS?.split(',')
+          .map((m) => m.trim())
+          .filter(Boolean),
       },
     },
   };

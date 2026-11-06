@@ -37,6 +37,30 @@ describe('loadConfig', () => {
     ).toEqual({ clientId: 'id', clientSecret: 'secret' });
   });
 
+  it('picks the build engine from the configured keys', () => {
+    expect(loadConfig({}).ai.engine).toBe('local');
+    expect(loadConfig({ ANTHROPIC_API_KEY: 'a' }).ai.engine).toBe('claude');
+    expect(loadConfig({ ANTHROPIC_API_KEY: 'a', NVIDIA_API_KEY: 'n' }).ai.engine).toBe('nim');
+    expect(
+      loadConfig({ ANTHROPIC_API_KEY: 'a', NVIDIA_API_KEY: 'n', GEMINI_API_KEY: 'g' }).ai.engine,
+    ).toBe('gemini');
+    expect(loadConfig({ GEMINI_API_KEY: 'g', AI_ENGINE: 'nim' }).ai.engine).toBe('nim');
+    expect(loadConfig({ GEMINI_API_KEY: ' ' }).ai.engine).toBe('local');
+  });
+
+  it('reads Gemini settings', () => {
+    const { gemini } = loadConfig({
+      GEMINI_API_KEY: 'g',
+      GEMINI_MODEL: 'gemini-3.6-flash',
+      GEMINI_FALLBACK_MODELS: 'gemini-3.5-flash-lite, gemini-3.1-flash-lite ,',
+    }).ai;
+    expect(gemini).toEqual({
+      apiKey: 'g',
+      model: 'gemini-3.6-flash',
+      fallbackModels: ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'],
+    });
+  });
+
   it('disables dev login in production', () => {
     expect(loadConfig({ NODE_ENV: 'production' }).devLoginEnabled).toBe(false);
   });

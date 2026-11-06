@@ -33,13 +33,14 @@ iframe. Runtime errors surface with a **Fix it** button that sends them back to 
 
 ### Build engines
 
-| Engine           | When                                    | What it does                                                                          |
-| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
-| **NVIDIA NIM**   | `NVIDIA_API_KEY` is set                 | Any NIM chat model (default `minimaxai/minimax-m3.1-flash`) writes the whole project. |
-| **Claude**       | `ANTHROPIC_API_KEY` is set (and no NIM) | `claude-opus-5-5` writes the project and makes free-form edits.                       |
-| **Canvas Local** | No key                                  | Offline and deterministic: typed section components plus generated content/theme.     |
+| Engine           | When                                       | What it does                                                                                              |
+| ---------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| **Gemini**       | `GEMINI_API_KEY` is set                    | `gemini-3.8-flash` (falls back to `gemini-3.6-flash` when busy) writes the project; thoughts stream live. |
+| **NVIDIA NIM**   | `NVIDIA_API_KEY` is set (and no Gemini)    | Any NIM chat model (default `minimaxai/minimax-m3.1-flash`) writes the whole project.                     |
+| **Claude**       | `ANTHROPIC_API_KEY` is set (and no others) | `claude-opus-5-5` writes the project and makes free-form edits.                                           |
+| **Canvas Local** | No key                                     | Offline and deterministic: typed section components plus generated content/theme.                         |
 
-`AI_ENGINE=nim|claude|local` forces one. The AI engines share one system prompt,
+`AI_ENGINE=gemini|nim|claude|local` forces one. The AI engines share one system prompt,
 [`apps/api/prompts/website-builder.md`](apps/api/prompts/website-builder.md), and **design
 references** in `apps/api/prompts/design/<name>/` (notes + screenshots, matched by keywords and
 sent to vision models on a fresh build). Add a folder there to teach the builder a new look.
@@ -83,7 +84,7 @@ pnpm dev          # API on http://localhost:4000, web on http://localhost:5173
 Open http://localhost:5173, type what you want to build and sign in with the developer form
 (**Use demo account** fills it in).
 
-To build with an AI model, put `NVIDIA_API_KEY=...` (or `ANTHROPIC_API_KEY=...`) in
+To build with an AI model, put `GEMINI_API_KEY=...` (or `NVIDIA_API_KEY=...` / `ANTHROPIC_API_KEY=...`) in
 `apps/api/.env` — it is gitignored. Without a key the offline Canvas Local engine is used.
 
 Optional API settings live in `apps/api/.env` — copy `apps/api/.env.example` to get started.
