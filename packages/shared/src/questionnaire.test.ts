@@ -57,6 +57,20 @@ describe('validateStep', () => {
         expect(result.fieldErrors.logoUrl).toMatch(/valid URL/);
       }
     });
+
+    it.each(['javascript:alert(1)', 'data:text/html,hi', 'ftp://files.example.com/logo.png'])(
+      'rejects non-http(s) logo url %s',
+      (logoUrl) => {
+        expect(validateStep('brand', { brandName: 'Safe', logoUrl }).success).toBe(false);
+      },
+    );
+
+    it('accepts https logo urls', () => {
+      expect(
+        validateStep('brand', { brandName: 'Safe', logoUrl: 'https://cdn.example.com/logo.png' })
+          .success,
+      ).toBe(true);
+    });
   });
 
   describe('category', () => {
@@ -156,6 +170,10 @@ describe('validateStep', () => {
         success: true,
         data: {},
       });
+    });
+
+    it('rejects javascript: social links', () => {
+      expect(validateStep('contact', { facebook: 'javascript:alert(1)' }).success).toBe(false);
     });
 
     it('validates email and social urls', () => {

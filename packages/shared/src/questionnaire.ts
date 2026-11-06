@@ -28,11 +28,14 @@ export const FONT_PAIRING_IDS = Object.keys(FONT_PAIRINGS) as [FontPairing, ...F
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'Must be a hex colour like #1a2b3c');
+/** Only http(s) links — these end up in generated HTML, so `javascript:` etc. must be rejected. */
+const webUrl = (message = 'Must be a valid http(s) URL') =>
+  z.url({ protocol: /^https?$/, message });
 
 export const brandStepSchema = z.object({
   brandName: z.string().trim().min(2, 'Brand name must be at least 2 characters').max(80),
   tagline: optionalText(140),
-  logoUrl: z.url('Logo must be a valid URL').optional(),
+  logoUrl: webUrl('Logo must be a valid URL').optional(),
 });
 
 export const categoryStepSchema = z
@@ -106,9 +109,9 @@ export const contactStepSchema = z.object({
   email: z.email('Enter a valid email').optional(),
   phone: optionalText(40),
   address: optionalText(200),
-  instagram: z.url().optional(),
-  facebook: z.url().optional(),
-  linkedin: z.url().optional(),
+  instagram: webUrl().optional(),
+  facebook: webUrl().optional(),
+  linkedin: webUrl().optional(),
 });
 
 export const QUESTIONNAIRE_STEPS = [
