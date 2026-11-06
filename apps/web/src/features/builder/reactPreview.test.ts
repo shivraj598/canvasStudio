@@ -42,14 +42,16 @@ describe('isReactProject', () => {
 describe('esmUrl', () => {
   const versions = { react: '^19.1.0', 'react-dom': '~19.1.0', '@scope/pkg': '2.0.0' };
   it('pins versions from package.json and shares React', () => {
-    expect(esmUrl('react/jsx-runtime', versions)).toBe('https://esm.sh/react@19.1.0/jsx-runtime');
+    expect(esmUrl('react/jsx-runtime', versions)).toBe(
+      'https://esm.sh/react@19.1.0/jsx-runtime?dev',
+    );
     expect(esmUrl('react-dom/client', versions)).toBe(
-      'https://esm.sh/react-dom@19.1.0/client?external=react',
+      'https://esm.sh/react-dom@19.1.0/client?dev&external=react',
     );
     expect(esmUrl('@scope/pkg/sub', versions)).toBe(
-      'https://esm.sh/@scope/pkg@2.0.0/sub?external=react,react-dom',
+      'https://esm.sh/@scope/pkg@2.0.0/sub?dev&external=react,react-dom',
     );
-    expect(esmUrl('clsx', versions)).toBe('https://esm.sh/clsx?external=react,react-dom');
+    expect(esmUrl('clsx', versions)).toBe('https://esm.sh/clsx?dev&external=react,react-dom');
     expect(packageName('@scope/pkg/sub')).toBe('@scope/pkg');
   });
 });
@@ -66,8 +68,9 @@ describe('bundleReactPreview', () => {
       'react/jsx-runtime',
     ]);
     expect(map.imports['lucide-react']).toBe(
-      'https://esm.sh/lucide-react@0.468.0?external=react,react-dom',
+      'https://esm.sh/lucide-react@0.468.0?dev&external=react,react-dom',
     );
+    expect(html).toContain('has no export named');
 
     // The project's own entry script is replaced by the module registry.
     expect(html).not.toContain('src="/src/main.tsx"');

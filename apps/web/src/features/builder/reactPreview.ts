@@ -51,15 +51,18 @@ export function packageName(specifier: string): string {
   return specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0]!;
 }
 
-/** esm.sh URL for a bare import, sharing React across every package. */
+/**
+ * esm.sh URL for a bare import, sharing React across every package. Development builds are used
+ * so errors are readable ("Check the render method of `Hero`") — for people and for the AI.
+ */
 export function esmUrl(specifier: string, versions: Record<string, string>): string {
   const name = packageName(specifier);
   const subpath = specifier.slice(name.length);
   const version = cleanVersion(versions[name]) ?? DEFAULT_VERSIONS[name];
   const at = version ? `${name}@${version}` : name;
-  if (name === 'react') return `https://esm.sh/${at}${subpath}`;
-  if (name === 'react-dom') return `https://esm.sh/${at}${subpath}?external=react`;
-  return `https://esm.sh/${at}${subpath}?external=react,react-dom`;
+  if (name === 'react') return `https://esm.sh/${at}${subpath}?dev`;
+  if (name === 'react-dom') return `https://esm.sh/${at}${subpath}?dev&external=react`;
+  return `https://esm.sh/${at}${subpath}?dev&external=react,react-dom`;
 }
 
 /** Keeps inline code from closing the surrounding <script> or <style> element. */
@@ -136,6 +139,18 @@ function load(path) {
   return module.exports;
 }
 
+// Importing a name a package doesn't export (say, an icon that doesn't exist) would otherwise
+// surface as a cryptic React error far away; fail right where it is used, with its name.
+const PASSTHROUGH = new Set(['__esModule', 'default', 'then', 'toJSON', '$$typeof', 'constructor']);
+function strictExports(spec, mod) {
+  return new Proxy(mod, {
+    get(target, prop) {
+      if (typeof prop === 'symbol' || prop in target || PASSTHROUGH.has(prop)) return target[prop];
+      throw new Error('"' + spec + '" has no export named "' + String(prop) + '". Check the import — it may not exist in this version of the package.');
+    },
+  });
+}
+
 function makeRequire(from) {
   return (spec) => {
     if (/\\.(css|scss|sass|less)$/.test(spec)) return {};
@@ -153,7 +168,7 @@ function makeRequire(from) {
   if (COMPILE_ERROR) return report(COMPILE_ERROR);
   try {
     const loaded = await Promise.all(PACKAGES.map((spec) => import(spec)));
-    PACKAGES.forEach((spec, i) => { external[spec] = Object.assign({ __esModule: true }, loaded[i]); });
+    PACKAGES.forEach((spec, i) => { external[spec] = strictExports(spec, Object.assign({ __esModule: true }, loaded[i])); });
   } catch (error) {
     return report('Could not load a package from esm.sh: ' + (error && error.message));
   }
