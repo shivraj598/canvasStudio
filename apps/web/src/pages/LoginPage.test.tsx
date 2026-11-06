@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { ApiError } from '../lib/api';
 import { createFakeApi, renderWithProviders, testUser } from '../test/utils';
-import { LoginPage } from './LoginPage';
+import { DEMO_ACCOUNT, LoginPage } from './LoginPage';
 
 const PROVIDERS = [
   { id: 'google', label: 'Continue with Google', enabled: false },
@@ -59,6 +59,25 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('Projects page')).toBeInTheDocument();
     expect(api.devLogin).toHaveBeenCalledWith({ name: 'Asha', email: 'asha@example.com' });
+  });
+
+  it('autofills the demo account', async () => {
+    const api = createFakeApi({
+      providers: async () => [...PROVIDERS],
+      devLogin: async () => ({ token: 't', user: testUser }),
+    });
+    renderLogin(api);
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText('Email'), 'typo@');
+    await user.click(screen.getByRole('button', { name: 'Use demo account' }));
+
+    expect(screen.getByLabelText('Your name')).toHaveValue('Demo User');
+    expect(screen.getByLabelText('Email')).toHaveValue('demo@canvasstudio.dev');
+    expect(api.devLogin).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByText('Projects page')).toBeInTheDocument();
+    expect(api.devLogin).toHaveBeenCalledWith(DEMO_ACCOUNT);
   });
 
   it('returns to the page the user originally wanted', async () => {

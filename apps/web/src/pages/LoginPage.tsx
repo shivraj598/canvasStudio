@@ -11,6 +11,9 @@ import { useApi } from '../lib/ApiContext';
 
 const ICONS = { google: GoogleIcon, github: GitHubIcon } as const;
 
+/** Prefilled by the "Use demo account" button. Dev sign-in has no password. */
+export const DEMO_ACCOUNT = { name: 'Demo User', email: 'demo@canvasstudio.dev' };
+
 export function LoginPage() {
   const api = useApi();
   const { state, signInWithDev } = useAuth();
@@ -104,9 +107,21 @@ export function LoginPage() {
               className="mt-6 space-y-4 border-t border-gray-100 pt-6"
               noValidate
             >
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
-                Developer sign-in
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                  Developer sign-in
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm(DEMO_ACCOUNT);
+                    setErrors({});
+                  }}
+                  className="text-sm font-medium text-brand-700 hover:underline"
+                >
+                  Use demo account
+                </button>
+              </div>
               <TextField
                 label="Your name"
                 value={form.name}
