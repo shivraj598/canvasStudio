@@ -88,10 +88,17 @@ prompt ─▶ POST /projects/:id/chat ─▶ runBuild() ─▶ BuildEngine.strea
 type="file" path="…">` blocks with whole-file contents (the approach Bolt uses). The parser in
   `@canvas/shared` handles tags split across chunks. Paths are validated (`isSafePath`), and
   files/sizes are capped.
-- **Engines** (`apps/api/src/ai`). The Claude engine streams `claude-opus-5-5` with the current
-  files in every request and opts into the API's refusal fallback. Canvas Local turns prompts into
-  a `site.config.json` model (`intent.ts`) and renders it (`render.ts`), so follow-ups edit
-  structured data rather than HTML. The Claude engine deletes that file when it rewrites the page.
+- **Engines** (`apps/api/src/ai`). The NIM engine (`nim.ts`) streams an OpenAI-compatible model
+  on integrate.api.nvidia.com, forwarding `reasoning_content` as `reasoning` events. The Claude
+  engine streams `claude-opus-5-5` with the API's refusal fallback. Both build their input with
+  `conversation.ts` (history, current files, matching design reference) and share the system
+  prompt file loaded by `prompts.ts`. Canvas Local turns prompts into a `site.config.json` model
+  (`intent.ts`) and renders a React project from it (`project.ts` + `apps/api/templates/react-site`),
+  so follow-ups only regenerate `src/content.ts` / `src/index.css`.
+- **Generated projects** are Vite + React + TypeScript + Tailwind v4. In the web app,
+  `reactPreview.ts` compiles them with Sucrase into a module registry, maps bare imports to esm.sh
+  through an import map (React marked external so there is one copy), and feeds CSS to Tailwind's
+  browser build. Errors are posted to the parent window as `canvas:preview-error`.
 - **Streaming.** The route hijacks the reply to write server-sent events, sends a heartbeat while
   the model thinks, allows one build per project, and aborts the engine if the client
   disconnects (completed files are kept). Leaving the page without stopping lets the build finish.

@@ -20,14 +20,29 @@ not write code.
 The original step-by-step questionnaire is still available as **Guided setup** and produces a
 site in the same workspace.
 
+### What gets built
+
+Every website is a **real npm project**: Vite + React 19 + TypeScript (strict) + Tailwind CSS v4,
+with lucide-react icons. Download it as a ZIP and run `npm install && npm run dev` — the same
+code that runs in the preview passes `tsc` and `vite build`. (Node.js + Express and Supabase come
+next; today the generated sites are frontend-only.)
+
+The workspace preview compiles the project in the browser (Sucrase), loads packages from esm.sh
+at the versions in its `package.json`, and runs Tailwind's browser build — all inside a sandboxed
+iframe. Runtime errors surface with a **Fix it** button that sends them back to the AI.
+
 ### Build engines
 
-| Engine           | When                         | What it does                                                                                                                   |
-| ---------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Claude**       | `ANTHROPIC_API_KEY` is set   | `claude-opus-5-5` designs and writes the site (HTML + Tailwind + JS) and makes free-form edits.                                |
-| **Canvas Local** | No key (default in dev/test) | Offline, deterministic. Understands site prompts for common businesses and edits to theme, sections, copy and contact details. |
+| Engine           | When                                    | What it does                                                                          |
+| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
+| **NVIDIA NIM**   | `NVIDIA_API_KEY` is set                 | Any NIM chat model (default `minimaxai/minimax-m3.1-flash`) writes the whole project. |
+| **Claude**       | `ANTHROPIC_API_KEY` is set (and no NIM) | `claude-opus-5-5` writes the project and makes free-form edits.                       |
+| **Canvas Local** | No key                                  | Offline and deterministic: typed section components plus generated content/theme.     |
 
-Both speak the same streaming artifact protocol, so the UI behaves identically.
+`AI_ENGINE=nim|claude|local` forces one. The AI engines share one system prompt,
+[`apps/api/prompts/website-builder.md`](apps/api/prompts/website-builder.md), and **design
+references** in `apps/api/prompts/design/<name>/` (notes + screenshots, matched by keywords and
+sent to vision models on a fresh build). Add a folder there to teach the builder a new look.
 
 ## Tech stack
 
@@ -68,8 +83,8 @@ pnpm dev          # API on http://localhost:4000, web on http://localhost:5173
 Open http://localhost:5173, type what you want to build and sign in with the developer form
 (**Use demo account** fills it in).
 
-To build with Claude, put `ANTHROPIC_API_KEY=...` in `apps/api/.env`. Without it the offline
-Canvas Local engine is used.
+To build with an AI model, put `NVIDIA_API_KEY=...` (or `ANTHROPIC_API_KEY=...`) in
+`apps/api/.env` — it is gitignored. Without a key the offline Canvas Local engine is used.
 
 Optional API settings live in `apps/api/.env` — copy `apps/api/.env.example` to get started.
 
