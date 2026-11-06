@@ -1,5 +1,7 @@
 import type {
   ApiErrorBody,
+  BuildEvent,
+  BuilderInfo,
   AuthProviderInfo,
   AuthSession,
   AuthUser,
@@ -73,7 +75,8 @@ export function createApiClient({
     let res: Response;
     try {
       res = await fetchImpl(`${baseUrl}${path}`, { ...init, headers });
-    } catch {
+    } catch (error) {
+      if (init.signal?.aborted) throw error;
       throw new ApiError(
         0,
         'NETWORK_ERROR',
@@ -114,8 +117,8 @@ export function createApiClient({
     async listProjects() {
       return (await json<{ projects: Project[] }>('/projects')).projects;
     },
-    async createProject(name?: string) {
-      const payload = name ? { name } : {};
+    async createProject(input: { name?: string; prompt?: string } = {}) {
+      const payload = Object.fromEntries(Object.entries(input).filter(([, v]) => v));
       return (
         await json<{ project: Project }>('/projects', { method: 'POST', body: body(payload) })
       ).project;
@@ -149,7 +152,65 @@ export function createApiClient({
     async previewHtml(id: string) {
       return (await send(`/projects/${id}/preview`)).text();
     },
+    async builderInfo() {
+      return json<BuilderInfo>('/builder');
+    },
+    async restoreVersion(id: string, versionId: string) {
+      return (
+        await json<{ project: Project }>(`/projects/${id}/versions/${versionId}/restore`, {
+          method: 'POST',
+        })
+      ).project;
+    },
+    /**
+     * Sends a chat message and streams the build. Resolves when the stream ends; `onEvent`
+     * receives every server-sent event in order. Aborting the signal stops the build.
+     */
+    async streamChat(
+      id: string,
+      prompt: string,
+      { onEvent, signal }: { onEvent(event: BuildEvent<Project>): void; signal?: AbortSignal },
+    ) {
+      const res = await send(`/projects/${id}/chat`, {
+        method: 'POST',
+        body: body({ prompt }),
+        headers: { accept: 'text/event-stream' },
+        signal,
+      });
+      if (!res.body) throw new ApiError(0, 'NO_STREAM', 'The server did not stream a response.');
+      await readEventStream(res.body, onEvent);
+    },
   };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
+
+/** Parses a `text/event-stream` body of `data: <json>` messages. Comments are ignored. */
+export async function readEventStream<T>(
+  stream: ReadableStream<Uint8Array>,
+  onEvent: (event: T) => void,
+): Promise<void> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  const flush = (block: string) => {
+    const data = block
+      .split('\n')
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).replace(/^ /, ''))
+      .join('\n');
+    if (data) onEvent(JSON.parse(data) as T);
+  };
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let at: number;
+    while ((at = buffer.indexOf('\n\n')) !== -1) {
+      flush(buffer.slice(0, at));
+      buffer = buffer.slice(at + 2);
+    }
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) flush(buffer);
+}
