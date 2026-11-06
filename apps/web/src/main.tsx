@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App';
+import { Toaster } from './components/ui/sonner';
+import { TooltipProvider } from './components/ui/tooltip';
 import { AuthProvider } from './auth/AuthContext';
 import { ApiProvider } from './lib/ApiContext';
 import './index.css';
@@ -11,7 +13,10 @@ createRoot(document.getElementById('root')!).render(
     <ApiProvider>
       <AuthProvider>
         <BrowserRouter>
-          <App />
+          <TooltipProvider>
+            <App />
+            <Toaster />
+          </TooltipProvider>
         </BrowserRouter>
       </AuthProvider>
     </ApiProvider>
