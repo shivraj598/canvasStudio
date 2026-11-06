@@ -5,6 +5,7 @@ import { loadConfig, type AppConfig } from './config.js';
 import { errorBody, errorHandler } from './errors.js';
 import { authRoutes } from './routes/auth.js';
 import { healthRoutes } from './routes/health.js';
+import { projectRoutes } from './routes/projects.js';
 import { createMemoryStore } from './store/memory.js';
 import type { Store } from './store/types.js';
 
@@ -33,6 +34,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     async (api) => {
       await api.register(healthRoutes);
       await api.register(authRoutes);
+      await api.register(projectRoutes);
     },
     { prefix: '/api' },
   );
