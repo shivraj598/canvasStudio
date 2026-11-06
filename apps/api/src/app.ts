@@ -1,5 +1,6 @@
 import cors from '@fastify/cors';
 import { createClaudeEngine } from './ai/claude.js';
+import { createGeminiEngine } from './ai/gemini.js';
 import { createLocalEngine } from './ai/local/engine.js';
 import { createNimEngine } from './ai/nim.js';
 import { loadPromptLibrary } from './ai/prompts.js';
@@ -48,6 +49,15 @@ export function createStore(config: AppConfig): { store: Store; description: str
 
 export function createEngine(config: AppConfig): BuildEngine {
   const { ai } = config;
+  if (ai.engine === 'gemini') {
+    if (!ai.gemini.apiKey) throw new Error('AI_ENGINE=gemini needs GEMINI_API_KEY');
+    return createGeminiEngine({
+      library: loadPromptLibrary(),
+      apiKey: ai.gemini.apiKey,
+      model: ai.gemini.model,
+      fallbackModels: ai.gemini.fallbackModels,
+    });
+  }
   if (ai.engine === 'nim') {
     if (!ai.nvidia.apiKey) throw new Error('AI_ENGINE=nim needs NVIDIA_API_KEY');
     return createNimEngine({

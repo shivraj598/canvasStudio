@@ -94,9 +94,12 @@ prompt ─▶ POST /projects/:id/chat ─▶ runBuild() ─▶ BuildEngine.strea
 type="file" path="…">` blocks with whole-file contents (the approach Bolt uses). The parser in
   `@canvas/shared` handles tags split across chunks. Paths are validated (`isSafePath`), and
   files/sizes are capped.
-- **Engines** (`apps/api/src/ai`). The NIM engine (`nim.ts`) streams an OpenAI-compatible model
+- **Engines** (`apps/api/src/ai`). The Gemini engine (`gemini.ts`) streams Google's
+  Interactions API statelessly (`store: false`, history sent as `user_input`/`model_output`
+  steps), forwards thought summaries as `reasoning` events, and falls through to the next model
+  on 429/503 before any output. The NIM engine (`nim.ts`) streams an OpenAI-compatible model
   on integrate.api.nvidia.com, forwarding `reasoning_content` as `reasoning` events. The Claude
-  engine streams `claude-opus-5-5` with the API's refusal fallback. Both build their input with
+  engine streams `claude-opus-5-5` with the API's refusal fallback. All build their input with
   `conversation.ts` (history, current files, matching design reference) and share the system
   prompt file loaded by `prompts.ts`. Canvas Local turns prompts into a `site.config.json` model
   (`intent.ts`) and renders a React project from it (`project.ts` + `apps/api/templates/react-site`),

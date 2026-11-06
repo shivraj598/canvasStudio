@@ -41,7 +41,7 @@ export interface ProjectVersion {
   files: ProjectFile[];
 }
 
-export type EngineId = 'claude' | 'nim' | 'local';
+export type EngineId = 'gemini' | 'claude' | 'nim' | 'local';
 
 export interface EngineInfo {
   id: EngineId;

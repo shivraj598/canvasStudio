@@ -186,7 +186,7 @@ describe('runBuild', () => {
       engine: scriptedEngine([
         'Done. <canvasArtifact>',
         '<canvasAction type="file" path="package.json">{"name":"x","dependencies":{"react":"^19.1.0"}}</canvasAction>',
-        '<canvasAction type="file" path="src/App.tsx">import clsx from \'clsx\';</canvasAction>',
+        '<canvasAction type="file" path="src/App.tsx">import clsx from \'clsx\';\nexport const c = clsx(\'a\');</canvasAction>',
         '</canvasArtifact>',
       ]),
       project: { ...baseProject, files: [] },
@@ -197,6 +197,32 @@ describe('runBuild', () => {
     const pkg = result.patch.files!.find((f) => f.path === 'package.json')!;
     expect(JSON.parse(pkg.content).dependencies.clsx).toBe('^2.1.1');
     expect(result.patch.messages?.[1]?.content).toContain('Added `clsx` to package.json');
+  });
+
+  it('removes imports the model left unused', async () => {
+    const events: BuildEvent<Project>[] = [];
+    const result = await runBuild({
+      ...opts,
+      engine: scriptedEngine([
+        'Done. <canvasArtifact>',
+        '<canvasAction type="file" path="src/Hero.tsx">',
+        "import { Heart, Star } from 'lucide-react';\nimport { site } from './content';\n",
+        'export const Hero = () => <Star />;\n',
+        '</canvasAction></canvasArtifact>',
+      ]),
+      project: { ...baseProject, files: [] },
+      prompt: 'build it',
+      signal: new AbortController().signal,
+      emit: (e) => events.push(e),
+    });
+    const hero = result.patch.files!.find((f) => f.path === 'src/Hero.tsx')!;
+    expect(hero.content).toBe(
+      "import { Star } from 'lucide-react';\nexport const Hero = () => <Star />;\n",
+    );
+    expect(result.patch.messages?.[1]?.content).toContain('Removed 2 unused imports');
+    // The live view gets the cleaned file too.
+    const deltas = events.filter((e) => e.type === 'file_delta' && e.path === 'src/Hero.tsx');
+    expect(deltas.at(-1)).toMatchObject({ delta: hero.content });
   });
 
   it('keeps files unchanged and explains when the engine fails', async () => {
