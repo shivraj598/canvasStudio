@@ -15,6 +15,8 @@ import { generateRoutes } from './routes/generate.js';
 import { healthRoutes } from './routes/health.js';
 import { projectRoutes } from './routes/projects.js';
 import { createMemoryStore } from './store/memory.js';
+import { createSqliteStore } from './store/sqlite.js';
+import { createSupabaseStore } from './store/supabase.js';
 import type { Store } from './store/types.js';
 
 export interface BuildAppOptions {
@@ -23,6 +25,25 @@ export interface BuildAppOptions {
   generator?: SiteGenerator;
   engine?: BuildEngine;
   logger?: boolean;
+}
+
+/** Builds the store selected by the config (see `StoreConfig`). */
+export function createStore(config: AppConfig): { store: Store; description: string } {
+  const { store } = config;
+  switch (store.kind) {
+    case 'supabase':
+      return {
+        store: createSupabaseStore({ url: store.url, serviceRoleKey: store.serviceRoleKey }),
+        description: `Supabase Postgres at ${store.url}`,
+      };
+    case 'sqlite':
+      return {
+        store: createSqliteStore({ path: store.path }),
+        description: `SQLite at ${store.path}`,
+      };
+    case 'memory':
+      return { store: createMemoryStore(), description: 'in memory (not persisted)' };
+  }
 }
 
 export function createEngine(config: AppConfig): BuildEngine {
@@ -52,7 +73,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   const app = Fastify({ logger: options.logger ?? config.env !== 'test' });
 
   app.decorate('config', config);
-  app.decorate('store', options.store ?? createMemoryStore());
+
+  let store = options.store;
+  if (!store) {
+    const created = createStore(config);
+    store = created.store;
+    app.log.info(`Storing data: ${created.description}`);
+  }
+  app.decorate('store', store);
+  const storeToClose = store;
+  app.addHook('onClose', async () => {
+    await storeToClose.close?.();
+  });
   app.decorate('generator', options.generator ?? createTemplateGenerator());
   app.decorate('engine', options.engine ?? createEngine(config));
 

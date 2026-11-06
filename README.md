@@ -53,7 +53,7 @@ sent to vision models on a fresh build). Add a folder there to teach the builder
 | Frontend | React 19, Vite, Tailwind CSS 4, Radix (shadcn-style), Motion |
 | Backend  | Fastify 5, Zod, Anthropic SDK (Claude), server-sent events   |
 | Shared   | `@canvas/shared` — questionnaire schemas, types, palettes    |
-| Storage  | In-memory repositories behind an interface (Supabase next)   |
+| Storage  | Repositories behind an interface: SQLite (dev), Supabase     |
 | Testing  | Vitest, Testing Library, Fastify `inject`                    |
 | CI       | GitHub Actions: format, lint, typecheck, test, build         |
 
@@ -87,6 +87,15 @@ To build with an AI model, put `NVIDIA_API_KEY=...` (or `ANTHROPIC_API_KEY=...`)
 `apps/api/.env` — it is gitignored. Without a key the offline Canvas Local engine is used.
 
 Optional API settings live in `apps/api/.env` — copy `apps/api/.env.example` to get started.
+
+Accounts, sessions and projects are saved in a SQLite database at `apps/api/.data/canvas.db`
+(Node's built-in `node:sqlite`, so there is nothing to install). They survive restarts. The
+folder is gitignored. Set `DATA_DIR` to keep the database somewhere else, or delete the folder
+to start fresh. Tests use an in-memory store.
+
+**Optional: Supabase.** The API also has a Postgres store for Supabase. It stays off unless
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set. See
+[supabase/README.md](supabase/README.md).
 
 ## Scripts
 

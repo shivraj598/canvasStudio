@@ -1,7 +1,9 @@
 import { LogOut } from 'lucide-react';
+import { Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { Logo } from './Logo';
+import { RouteFallback } from './RouteFallback';
 import { Button } from './ui/button';
 
 function initials(name: string) {
@@ -43,7 +45,9 @@ export function AppLayout() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8 sm:py-10">
-        <Outlet />
+        <Suspense fallback={<RouteFallback variant="content" />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

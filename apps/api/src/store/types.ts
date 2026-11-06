@@ -1,13 +1,15 @@
 import type { AuthProviderId, AuthUser, Project } from '@canvas/shared';
 
 /**
- * Persistence boundary. Routes only talk to this interface, so the in-memory store used in
- * development and tests can be swapped for Supabase/Postgres without touching them.
+ * Persistence boundary. Routes only talk to this interface; implementations are the in-memory
+ * store (tests), SQLite (local development) and the Supabase/Postgres store.
  */
 export interface Store {
   users: UserRepository;
   sessions: SessionRepository;
   projects: ProjectRepository;
+  /** Flushes pending writes and releases resources. Called when the app closes. */
+  close?(): Promise<void>;
 }
 
 export interface NewUser {

@@ -1,3 +1,5 @@
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 const blankToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
@@ -16,6 +18,12 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalSecret,
   GITHUB_CLIENT_ID: optionalSecret,
   GITHUB_CLIENT_SECRET: optionalSecret,
+  /** Supabase project URL, e.g. https://abcd.supabase.co. */
+  SUPABASE_URL: z.preprocess(blankToUndefined, z.url().optional()),
+  /** Server-only key; with SUPABASE_URL it switches persistence to Supabase Postgres. */
+  SUPABASE_SERVICE_ROLE_KEY: optionalSecret,
+  /** Folder for the local SQLite database canvas.db (default apps/api/.data). */
+  DATA_DIR: z.preprocess(blankToUndefined, z.string().optional()),
   /** Enables the Claude build engine. Without it, the offline engine is used. */
   ANTHROPIC_API_KEY: optionalSecret,
   ANTHROPIC_MODEL: z.preprocess(blankToUndefined, z.string().optional()),
@@ -36,6 +44,14 @@ export interface OAuthClientConfig {
   clientSecret: string;
 }
 
+export type StoreConfig =
+  | { kind: 'supabase'; url: string; serviceRoleKey: string }
+  | { kind: 'sqlite'; path: string }
+  | { kind: 'memory' };
+
+/** apps/api/.data — resolved from this file so it works from src/ (tsx) and dist/ (build). */
+const DEFAULT_DATA_DIR = fileURLToPath(new URL('../.data', import.meta.url));
+
 export interface AppConfig {
   env: 'development' | 'test' | 'production';
   port: number;
@@ -48,6 +64,8 @@ export interface AppConfig {
   };
   /** Password-less dev login. Never enabled in production. */
   devLoginEnabled: boolean;
+  /** Supabase when URL + service-role key are set, else memory in tests and SQLite otherwise. */
+  store: StoreConfig;
   ai: {
     engine: 'nim' | 'claude' | 'local';
     anthropicApiKey?: string;
@@ -59,6 +77,19 @@ export interface AppConfig {
 
 function oauthClient(id?: string, secret?: string): OAuthClientConfig | null {
   return id && secret ? { clientId: id, clientSecret: secret } : null;
+}
+
+function storeConfig(parsed: z.infer<typeof envSchema>): StoreConfig {
+  if (parsed.SUPABASE_URL && parsed.SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      kind: 'supabase',
+      url: parsed.SUPABASE_URL,
+      serviceRoleKey: parsed.SUPABASE_SERVICE_ROLE_KEY,
+    };
+  }
+  if (parsed.NODE_ENV === 'test') return { kind: 'memory' };
+  const dataDir = parsed.DATA_DIR ? resolve(parsed.DATA_DIR) : DEFAULT_DATA_DIR;
+  return { kind: 'sqlite', path: join(dataDir, 'canvas.db') };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -76,6 +107,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       github: oauthClient(parsed.GITHUB_CLIENT_ID, parsed.GITHUB_CLIENT_SECRET),
     },
     devLoginEnabled: parsed.NODE_ENV !== 'production',
+    store: storeConfig(parsed),
     ai: {
       engine:
         parsed.AI_ENGINE ??

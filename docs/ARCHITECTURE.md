@@ -37,9 +37,15 @@ layer.
   resolved by a plugin on every request and `requireUser()` guards routes. Google/GitHub are
   listed but disabled until `*_CLIENT_ID`/`*_CLIENT_SECRET` are set; `/auth/:provider/start` is
   the hook point for the OAuth flow.
-- **Store**: `Store` (users, sessions, projects) is an async repository interface. The
-  in-memory implementation is used now; a Supabase/Postgres implementation can replace it
-  without touching routes.
+- **Store**: `Store` (users, sessions, projects) is an async repository interface, so the
+  implementation can change without touching routes. `config.store` picks one: Supabase
+  Postgres (`store/supabase.ts`) when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set,
+  memory in tests, and otherwise SQLite (`store/sqlite.ts`, `node:sqlite`, default
+  `apps/api/.data/canvas.db`). SQLite and Postgres share the same tables and row mapping
+  (`store/rows.ts`). The SQLite schema is migrated on open, tracked with `PRAGMA user_version`.
+  All three pass the same contract suite (`store/contract.ts`). The Supabase store is tested
+  against an in-memory fake of PostgREST (`test/fake-postgrest.ts`). The store is closed when
+  the app closes.
 - **Ownership**: other users' projects are reported as 404, never 403.
 - **Errors**: always `{ error: { code, message, details? } }`; validation errors include
   `details.fields` keyed by field path.

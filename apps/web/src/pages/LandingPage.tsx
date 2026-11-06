@@ -10,7 +10,6 @@ import {
   Sparkles,
   Tablet,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -23,10 +22,10 @@ import { pendingPrompt } from '../features/builder/pendingPrompt';
 import { useApi } from '../lib/ApiContext';
 import { cn } from '../lib/utils';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-};
+/** Hero entrance, in CSS so the landing bundle doesn't need an animation library. */
+const fadeUp = (delayMs: number, durationMs = 600) => ({
+  style: { animationDelay: `${delayMs}ms`, animationDuration: `${durationMs}ms` },
+});
 
 /** The soft, slowly drifting colour field behind the hero. */
 function Aurora() {
@@ -285,46 +284,39 @@ export function LandingPage() {
         <Aurora />
         <Nav />
         <section className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pt-16 pb-28 text-center sm:pt-24">
-          <motion.a
-            {...fadeUp}
-            transition={{ duration: 0.5 }}
+          <a
+            {...fadeUp(0, 500)}
             href="#features"
-            className="group inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-card/70 py-1 pr-3 pl-1 text-[13px] text-foreground/80 shadow-sm backdrop-blur transition hover:bg-card"
+            className="animate-fade-up group inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-card/70 py-1 pr-3 pl-1 text-[13px] text-foreground/80 shadow-sm backdrop-blur transition hover:bg-card"
           >
             <span className="bg-signature rounded-full px-2 py-0.5 text-[11px] font-semibold text-white">
               New
             </span>
             Chat-to-build, with live code streaming
             <ArrowRight className="size-3.5 transition group-hover:translate-x-0.5" />
-          </motion.a>
+          </a>
 
-          <motion.h1
-            {...fadeUp}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-7 text-[2.8rem] leading-[1.02] font-semibold tracking-[-0.035em] text-balance sm:text-7xl"
+          <h1
+            {...fadeUp(50)}
+            className="animate-fade-up mt-7 text-[2.8rem] leading-[1.02] font-semibold tracking-[-0.035em] text-balance sm:text-7xl"
           >
             Build something{' '}
             <span className="text-signature pr-1 font-serif font-normal tracking-normal italic">
               wonderful
             </span>
             <span className="sr-only"> — your website, built from a conversation</span>
-          </motion.h1>
-          <motion.p
-            {...fadeUp}
-            transition={{ duration: 0.6, delay: 0.12 }}
-            className="mt-5 max-w-xl text-lg text-pretty text-foreground/65"
+          </h1>
+          <p
+            {...fadeUp(120)}
+            className="animate-fade-up mt-5 max-w-xl text-lg text-pretty text-foreground/65"
           >
             Your website, built from a conversation. Describe it, watch Canvas write it, and refine
             it in plain English — no code required.
-          </motion.p>
+          </p>
 
-          <motion.div
-            {...fadeUp}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-10 w-full"
-          >
+          <div {...fadeUp(200)} className="animate-fade-up mt-10 w-full">
             <PromptBox value={prompt} onValueChange={setPrompt} onSubmit={start} busy={starting} />
-          </motion.div>
+          </div>
         </section>
       </div>
 
@@ -343,13 +335,7 @@ export function LandingPage() {
         </div>
         <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {IDEAS.map((idea, i) => (
-            <motion.li
-              key={idea.label}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.06 }}
-            >
+            <li key={idea.label} className="reveal-on-scroll">
               <button
                 type="button"
                 onClick={() => pickIdea(idea)}
@@ -364,7 +350,7 @@ export function LandingPage() {
                   </span>
                 </div>
               </button>
-            </motion.li>
+            </li>
           ))}
         </ul>
       </section>
