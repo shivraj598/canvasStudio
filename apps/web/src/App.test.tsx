@@ -6,7 +6,9 @@ import { createFakeApi, renderWithProviders } from './test/utils';
 describe('App routing', () => {
   it('renders the landing page at /', () => {
     renderWithProviders(<App />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/your website/i);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      /build something wonderful/i,
+    );
   });
 
   it('sends anonymous users from /projects to login', async () => {
