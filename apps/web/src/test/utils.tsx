@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { vi, type Mocked } from 'vitest';
 import { AuthProvider } from '../auth/AuthContext';
 import type { ApiClient } from '../lib/api';
+import { TooltipProvider } from '../components/ui/tooltip';
 import { ApiProvider } from '../lib/ApiContext';
 
 export const testUser: AuthUser = {
@@ -51,6 +52,9 @@ export function createFakeApi(overrides: Partial<ApiClient> = {}): Mocked<ApiCli
     'saveStep',
     'generate',
     'previewHtml',
+    'builderInfo',
+    'restoreVersion',
+    'streamChat',
   ];
   const api = Object.fromEntries(
     methods.map((m) => [m, notMocked(m)]),
@@ -78,7 +82,9 @@ export function renderWithProviders(
   const result = render(
     <ApiProvider client={api}>
       <AuthProvider>
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[route]}>
+          <TooltipProvider>{ui}</TooltipProvider>
+        </MemoryRouter>
       </AuthProvider>
     </ApiProvider>,
   );

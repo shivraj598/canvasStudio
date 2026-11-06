@@ -18,6 +18,7 @@ import {
   type ProjectVersion,
 } from '@canvas/shared';
 import type { ProjectPatch } from '../store/types.js';
+import { reconcileDependencies } from './fixups.js';
 import { EngineError, type BuildEngine } from './types.js';
 
 export const MAX_FILE_BYTES = 512 * 1024;
@@ -127,7 +128,8 @@ export async function runBuild({
       signal,
     })) {
       if (signal.aborted) break;
-      parser.write(chunk);
+      if (typeof chunk === 'string') parser.write(chunk);
+      else emit({ type: 'reasoning', delta: chunk.reasoning });
     }
     parser.end();
     if (signal.aborted) status = 'stopped';
@@ -145,9 +147,27 @@ export async function runBuild({
     }
   }
 
+  // Fix slips a build tool would reject (e.g. imports missing from package.json).
+  if (status !== 'error' && changes.size > 0) {
+    const fixup = reconcileDependencies([...files].map(([path, c]) => ({ path, content: c })));
+    if (fixup) {
+      const { path, content: fixed } = fixup.file;
+      emit({ type: 'file_start', path, operation: original.has(path) ? 'update' : 'create' });
+      emit({ type: 'file_delta', path, delta: fixed });
+      emit({ type: 'file_end', path });
+      files.set(path, fixed);
+      changes.set(path, original.has(path) ? 'update' : 'create');
+      const note = `\n\n_${fixup.note}_`;
+      prose += note;
+      emit({ type: 'text', delta: note });
+    }
+  }
+
   const createdAt = now().toISOString();
   // A failed turn changes nothing; a stopped one keeps the files that finished writing.
   const applied = status !== 'error' && changes.size > 0;
+  // Drop stray fence lines a model may leave around the artifact.
+  prose = prose.replace(/^[ \t]*```[\w-]*[ \t]*$/gm, '').replace(/\n{3,}/g, '\n\n');
   const content =
     prose.trim() ||
     (status === 'stopped' ? 'Stopped.' : status === 'complete' && !applied ? 'Done.' : '');

@@ -23,8 +23,12 @@ const envSchema = z.object({
     blankToUndefined,
     z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('medium'),
   ),
-  /** Force an engine. Defaults to `claude` when an API key is set, else `local`. */
-  AI_ENGINE: z.preprocess(blankToUndefined, z.enum(['claude', 'local']).optional()),
+  /** Enables the NVIDIA NIM build engine (OpenAI-compatible, integrate.api.nvidia.com). */
+  NVIDIA_API_KEY: optionalSecret,
+  NVIDIA_MODEL: z.preprocess(blankToUndefined, z.string().optional()),
+  NVIDIA_BASE_URL: z.preprocess(blankToUndefined, z.url().optional()),
+  /** Force an engine. Default: nim with an NVIDIA key, else claude with an Anthropic key, else local. */
+  AI_ENGINE: z.preprocess(blankToUndefined, z.enum(['nim', 'claude', 'local']).optional()),
 });
 
 export interface OAuthClientConfig {
@@ -45,10 +49,11 @@ export interface AppConfig {
   /** Password-less dev login. Never enabled in production. */
   devLoginEnabled: boolean;
   ai: {
-    engine: 'claude' | 'local';
+    engine: 'nim' | 'claude' | 'local';
     anthropicApiKey?: string;
     model?: string;
     effort: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+    nvidia: { apiKey?: string; model?: string; baseUrl?: string };
   };
 }
 
@@ -72,10 +77,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     devLoginEnabled: parsed.NODE_ENV !== 'production',
     ai: {
-      engine: parsed.AI_ENGINE ?? (parsed.ANTHROPIC_API_KEY ? 'claude' : 'local'),
+      engine:
+        parsed.AI_ENGINE ??
+        (parsed.NVIDIA_API_KEY ? 'nim' : parsed.ANTHROPIC_API_KEY ? 'claude' : 'local'),
       anthropicApiKey: parsed.ANTHROPIC_API_KEY,
       model: parsed.ANTHROPIC_MODEL,
       effort: parsed.ANTHROPIC_EFFORT,
+      nvidia: {
+        apiKey: parsed.NVIDIA_API_KEY,
+        model: parsed.NVIDIA_MODEL,
+        baseUrl: parsed.NVIDIA_BASE_URL,
+      },
     },
   };
 }

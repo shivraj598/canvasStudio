@@ -74,6 +74,12 @@ describe('applying edits', () => {
     expect(kinds(config).at(-1)).toBe('contact');
   });
 
+  it('says so when a requested section already exists', () => {
+    const { config, notes } = applyEdits(base, 'add testimonials');
+    expect(kinds(config).filter((k) => k === 'testimonials')).toHaveLength(1);
+    expect(notes[0]).toMatch(/already on the page/);
+  });
+
   it('removes and moves sections', () => {
     const removed = applyEdits(base, 'remove the FAQ').config;
     expect(kinds(removed)).not.toContain('faq');

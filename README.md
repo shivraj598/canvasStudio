@@ -1,45 +1,61 @@
 # Canvas Studio
 
-Build a website for your clinic, classroom, restaurant, hotel or business by answering a few
-questions — no code required.
+Describe the website you want and watch AI build it — then refine it by chatting. Canvas Studio
+is a Lovable/Bolt-style builder for clinics, cafés, studios, startups and anyone who would rather
+not write code.
 
-Canvas Studio is for people who want a professional website without touching code: doctors,
-teachers, restaurant and hotel owners, consultants, shops, freelancers and community groups.
+## How it works
 
-## How it works (new user flow)
+1. **Describe it.** Type a prompt on the landing page or dashboard — _“A cozy café called Little
+   Fig in Brooklyn with a seasonal menu and reservations”_. Signed-out visitors keep their prompt
+   through sign-in.
+2. **Watch it build.** The workspace opens and the build starts immediately. The assistant
+   explains its plan while every file streams in live — follow along in the **Code** tab or wait
+   for the **Preview**.
+3. **Refine by chatting.** _“Make it dark”, “add a pricing section”, “change the headline to
+   …”_. Each change that touches files creates a **version** you can restore at any time.
+4. **Preview & export.** Switch between desktop, tablet and mobile, open the site in a new tab,
+   or download the code as a ZIP. _(One-click publishing comes next.)_
 
-1. **Land** on the home page and click _Start building_.
-2. **Sign in** with Google or GitHub _(buttons are in place; OAuth is configured later — a
-   developer sign-in is available locally)_.
-3. **Answer the questionnaire**, one step at a time. Answers are saved after every step, so
-   users can leave and resume later:
+The original step-by-step questionnaire is still available as **Guided setup** and produces a
+site in the same workspace.
 
-   | #   | Step             | What we ask                                                    |
-   | --- | ---------------- | -------------------------------------------------------------- |
-   | 1   | Your brand       | Brand name, tagline, logo                                      |
-   | 2   | Business type    | Doctor, teacher, restaurant, hotel, salon, consultant, …       |
-   | 3   | What you do      | Description, customers, what makes you different, location     |
-   | 4   | Goals            | Bookings, new customers, sell online, … plus expectations      |
-   | 5   | Pages & features | Pages (pre-selected per business type), booking, ordering, map |
-   | 6   | Dashboard        | Whether they want one, and which widgets                       |
-   | 7   | Look & feel      | Colour palette (or custom colours), style, fonts               |
-   | 8   | Contact          | Email, phone, address, social links                            |
+### What gets built
 
-4. **Review & generate** — we build the site from the answers.
-5. **Preview** it on desktop, tablet and mobile. _(Publishing to hosting comes next.)_
+Every website is a **real npm project**: Vite + React 19 + TypeScript (strict) + Tailwind CSS v4,
+with lucide-react icons. Download it as a ZIP and run `npm install && npm run dev` — the same
+code that runs in the preview passes `tsc` and `vite build`. (Node.js + Express and Supabase come
+next; today the generated sites are frontend-only.)
+
+The workspace preview compiles the project in the browser (Sucrase), loads packages from esm.sh
+at the versions in its `package.json`, and runs Tailwind's browser build — all inside a sandboxed
+iframe. Runtime errors surface with a **Fix it** button that sends them back to the AI.
+
+### Build engines
+
+| Engine           | When                                    | What it does                                                                          |
+| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
+| **NVIDIA NIM**   | `NVIDIA_API_KEY` is set                 | Any NIM chat model (default `minimaxai/minimax-m3.1-flash`) writes the whole project. |
+| **Claude**       | `ANTHROPIC_API_KEY` is set (and no NIM) | `claude-opus-5-5` writes the project and makes free-form edits.                       |
+| **Canvas Local** | No key                                  | Offline and deterministic: typed section components plus generated content/theme.     |
+
+`AI_ENGINE=nim|claude|local` forces one. The AI engines share one system prompt,
+[`apps/api/prompts/website-builder.md`](apps/api/prompts/website-builder.md), and **design
+references** in `apps/api/prompts/design/<name>/` (notes + screenshots, matched by keywords and
+sent to vision models on a fresh build). Add a folder there to teach the builder a new look.
 
 ## Tech stack
 
-| Area     | Choice                                                     |
-| -------- | ---------------------------------------------------------- |
-| Language | TypeScript everywhere                                      |
-| Monorepo | pnpm workspaces                                            |
-| Frontend | React 19, Vite, Tailwind CSS 4, React Router               |
-| Backend  | Fastify 5, Zod                                             |
-| Shared   | `@canvas/shared` — questionnaire schemas, types, palettes  |
-| Storage  | In-memory repositories behind an interface (Supabase next) |
-| Testing  | Vitest, Testing Library, Fastify `inject`                  |
-| CI       | GitHub Actions: format, lint, typecheck, test, build       |
+| Area     | Choice                                                       |
+| -------- | ------------------------------------------------------------ |
+| Language | TypeScript everywhere                                        |
+| Monorepo | pnpm workspaces                                              |
+| Frontend | React 19, Vite, Tailwind CSS 4, Radix (shadcn-style), Motion |
+| Backend  | Fastify 5, Zod, Anthropic SDK (Claude), server-sent events   |
+| Shared   | `@canvas/shared` — questionnaire schemas, types, palettes    |
+| Storage  | In-memory repositories behind an interface (Supabase next)   |
+| Testing  | Vitest, Testing Library, Fastify `inject`                    |
+| CI       | GitHub Actions: format, lint, typecheck, test, build         |
 
 ## Monorepo layout
 
@@ -64,8 +80,11 @@ pnpm install
 pnpm dev          # API on http://localhost:4000, web on http://localhost:5173
 ```
 
-Open http://localhost:5173, click **Sign in** and use the developer sign-in form with any
-name and email.
+Open http://localhost:5173, type what you want to build and sign in with the developer form
+(**Use demo account** fills it in).
+
+To build with an AI model, put `NVIDIA_API_KEY=...` (or `ANTHROPIC_API_KEY=...`) in
+`apps/api/.env` — it is gitignored. Without a key the offline Canvas Local engine is used.
 
 Optional API settings live in `apps/api/.env` — copy `apps/api/.env.example` to get started.
 
@@ -85,21 +104,24 @@ Optional API settings live in `apps/api/.env` — copy `apps/api/.env.example` t
 
 All routes are under `/api`. Protected routes need `Authorization: Bearer <token>`.
 
-| Method | Route                    | Description                                  |
-| ------ | ------------------------ | -------------------------------------------- |
-| GET    | `/health`                | Health check                                 |
-| GET    | `/auth/providers`        | Sign-in options and whether they are enabled |
-| POST   | `/auth/dev-login`        | Developer sign-in (disabled in production)   |
-| GET    | `/auth/me`               | Current user                                 |
-| POST   | `/auth/logout`           | End the session                              |
-| GET    | `/projects`              | My websites                                  |
-| POST   | `/projects`              | Start a new website                          |
-| GET    | `/projects/:id`          | Get one                                      |
-| PATCH  | `/projects/:id`          | Rename                                       |
-| DELETE | `/projects/:id`          | Delete                                       |
-| PUT    | `/projects/:id/answers`  | Save one questionnaire step `{ step, data }` |
-| POST   | `/projects/:id/generate` | Generate the site from complete answers      |
-| GET    | `/projects/:id/preview`  | Generated site as sandboxed HTML             |
+| Method | Route                                       | Description                                  |
+| ------ | ------------------------------------------- | -------------------------------------------- |
+| GET    | `/health`                                   | Health check                                 |
+| GET    | `/auth/providers`                           | Sign-in options and whether they are enabled |
+| POST   | `/auth/dev-login`                           | Developer sign-in (disabled in production)   |
+| GET    | `/auth/me`                                  | Current user                                 |
+| POST   | `/auth/logout`                              | End the session                              |
+| GET    | `/projects`                                 | My websites                                  |
+| POST   | `/projects`                                 | Start a new website (optional `prompt`)      |
+| GET    | `/projects/:id`                             | Get one                                      |
+| PATCH  | `/projects/:id`                             | Rename                                       |
+| DELETE | `/projects/:id`                             | Delete                                       |
+| PUT    | `/projects/:id/answers`                     | Save one questionnaire step `{ step, data }` |
+| POST   | `/projects/:id/generate`                    | Generate the site from complete answers      |
+| GET    | `/projects/:id/preview`                     | Guided-setup site as sandboxed HTML          |
+| GET    | `/builder`                                  | Which build engine is active                 |
+| POST   | `/projects/:id/chat`                        | Send `{ prompt }`; streams the build (SSE)   |
+| POST   | `/projects/:id/versions/:versionId/restore` | Restore a version as a new version           |
 
 ## Troubleshooting
 

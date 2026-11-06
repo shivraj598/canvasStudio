@@ -217,7 +217,7 @@ export function BuilderPage() {
     setActionError(null);
     try {
       await api.generate(project!.id);
-      navigate(`/projects/${project!.id}/preview`);
+      navigate(`/projects/${project!.id}`);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Could not generate your website');
       setGenerating(false);

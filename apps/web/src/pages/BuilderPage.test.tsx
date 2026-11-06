@@ -46,7 +46,7 @@ function renderBuilder(api: ReturnType<typeof statefulApi>['api']) {
   return renderWithProviders(
     <Routes>
       <Route path="/projects/:id/build" element={<BuilderPage />} />
-      <Route path="/projects/:id/preview" element={<p>Preview page</p>} />
+      <Route path="/projects/:id" element={<p>Preview page</p>} />
     </Routes>,
     { api, route: '/projects/p1/build', signedIn: true },
   );

@@ -70,3 +70,38 @@ answers ──buildSiteSpec()──▶ SiteSpec ──renderSinglePage()──�
   `/projects/:id/preview`.
 - The wizard (`BuilderPage`) keeps local form state per step, validates with the shared
   schema, saves each step and re-initialises from what the server stored.
+
+## Chat builder
+
+```
+prompt ─▶ POST /projects/:id/chat ─▶ runBuild() ─▶ BuildEngine.stream()  (Claude | Canvas Local)
+                │                         │
+                │ SSE: start, text,       └─▶ createArtifactParser(): prose ↔ <canvasAction> files
+                │ file_start/delta/end,        ─▶ apply files, record version, save messages
+                ▼ done/error
+       useBuild() in the workspace ─▶ chat, live code view, sandboxed preview
+```
+
+- **Projects are files.** `Project.files` holds the current site; `messages` the conversation;
+  `versions` full snapshots (capped at 50). Restoring a version records it as a new version.
+- **Artifact protocol.** Engines stream prose plus `<canvasArtifact>` / `<canvasAction
+type="file" path="…">` blocks with whole-file contents (the approach Bolt uses). The parser in
+  `@canvas/shared` handles tags split across chunks. Paths are validated (`isSafePath`), and
+  files/sizes are capped.
+- **Engines** (`apps/api/src/ai`). The NIM engine (`nim.ts`) streams an OpenAI-compatible model
+  on integrate.api.nvidia.com, forwarding `reasoning_content` as `reasoning` events. The Claude
+  engine streams `claude-opus-5-5` with the API's refusal fallback. Both build their input with
+  `conversation.ts` (history, current files, matching design reference) and share the system
+  prompt file loaded by `prompts.ts`. Canvas Local turns prompts into a `site.config.json` model
+  (`intent.ts`) and renders a React project from it (`project.ts` + `apps/api/templates/react-site`),
+  so follow-ups only regenerate `src/content.ts` / `src/index.css`.
+- **Generated projects** are Vite + React + TypeScript + Tailwind v4. In the web app,
+  `reactPreview.ts` compiles them with Sucrase into a module registry, maps bare imports to esm.sh
+  through an import map (React marked external so there is one copy), and feeds CSS to Tailwind's
+  browser build. Errors are posted to the parent window as `canvas:preview-error`.
+- **Streaming.** The route hijacks the reply to write server-sent events, sends a heartbeat while
+  the model thinks, allows one build per project, and aborts the engine if the client
+  disconnects (completed files are kept). Leaving the page without stopping lets the build finish.
+- **Preview isolation.** Generated sites may run scripts, so they are rendered from `srcdoc` in an
+  iframe with `allow-scripts` but never `allow-same-origin`; “open in new tab” wraps the site in a
+  sandboxed iframe for the same reason.

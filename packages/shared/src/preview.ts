@@ -5,6 +5,9 @@
  */
 import { normalizePath, type ProjectFile } from './builder.js';
 
+/** Tailwind's in-browser build, used by static sites and by the React preview. */
+export const TAILWIND_CDN = 'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11';
+
 export const EMPTY_PREVIEW_HTML = `<!doctype html><html><head><meta charset="utf-8"><style>
 html,body{height:100%;margin:0}body{display:grid;place-items:center;font:500 14px/1.5 system-ui,sans-serif;color:#71717a;background:#fafafa}
 </style></head><body><p>Nothing to preview yet.</p></body></html>`;

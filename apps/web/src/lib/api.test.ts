@@ -52,6 +52,36 @@ describe('createApiClient', () => {
     expect(JSON.parse(lastCall().init.body as string)).toEqual({});
   });
 
+  it('creates projects from a prompt', async () => {
+    const { client, lastCall } = setup(jsonResponse(201, { project: { id: 'p1' } }));
+    await client.createProject({ prompt: 'A bakery' });
+    expect(JSON.parse(lastCall().init.body as string)).toEqual({ prompt: 'A bakery' });
+  });
+
+  it('streams chat events, even when split across chunks', async () => {
+    const encoder = new TextEncoder();
+    const parts = [
+      'data: {"type":"text","delta":"Hel',
+      'lo"}\n\n: ping\n\ndata: {"type":"file_start","path":"index.html","operation":"create"}\n',
+      '\ndata: {"type":"text","delta":"!"}\n\n',
+    ];
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const p of parts) controller.enqueue(encoder.encode(p));
+        controller.close();
+      },
+    });
+    const { client, lastCall } = setup(new Response(body, { status: 200 }));
+    const events: unknown[] = [];
+    await client.streamChat('p1', 'Make it blue', { onEvent: (e) => events.push(e) });
+    expect(lastCall().url).toBe('/api/projects/p1/chat');
+    expect(events).toEqual([
+      { type: 'text', delta: 'Hello' },
+      { type: 'file_start', path: 'index.html', operation: 'create' },
+      { type: 'text', delta: '!' },
+    ]);
+  });
+
   it('returns preview HTML as text', async () => {
     const { client } = setup(new Response('<h1>Hi</h1>', { status: 200 }));
     await expect(client.previewHtml('p1')).resolves.toBe('<h1>Hi</h1>');

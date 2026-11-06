@@ -59,7 +59,10 @@ function partialTagLength(text: string, tags: string[]): number {
 
 /** Removes one leading newline and normalises trailing whitespace to a single newline. */
 function cleanContent(content: string): string {
-  const body = content.replace(/^\r?\n/, '').replace(/\s+$/, '');
+  let body = content.replace(/^\r?\n/, '').replace(/\s+$/, '');
+  // Some models wrap file contents in Markdown fences despite instructions.
+  const fenced = /^```[\w-]*\r?\n([\s\S]*?)\r?\n```$/.exec(body);
+  if (fenced) body = fenced[1]!.replace(/\s+$/, '');
   return body.length > 0 ? `${body}\n` : '';
 }
 

@@ -41,7 +41,7 @@ export interface ProjectVersion {
   files: ProjectFile[];
 }
 
-export type EngineId = 'claude' | 'local';
+export type EngineId = 'claude' | 'nim' | 'local';
 
 export interface EngineInfo {
   id: EngineId;
@@ -66,6 +66,8 @@ export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type BuildEvent<P = unknown> =
   | { type: 'start'; userMessage: ChatMessage; assistantMessageId: string; engine: EngineInfo }
   | { type: 'text'; delta: string }
+  /** The model's thinking, shown while it works and not saved. */
+  | { type: 'reasoning'; delta: string }
   | { type: 'file_start'; path: string; operation: FileOperation }
   | { type: 'file_delta'; path: string; delta: string }
   | { type: 'file_end'; path: string }
@@ -91,7 +93,8 @@ export function isSafePath(path: string): boolean {
   );
 }
 
-export type FileLanguage = 'markup' | 'css' | 'javascript' | 'json' | 'markdown' | 'text';
+export type FileLanguage =
+  'markup' | 'css' | 'javascript' | 'jsx' | 'typescript' | 'tsx' | 'json' | 'markdown' | 'text';
 
 export function fileLanguage(path: string): FileLanguage {
   const ext = path.split('.').pop()?.toLowerCase();
@@ -104,10 +107,15 @@ export function fileLanguage(path: string): FileLanguage {
       return 'css';
     case 'js':
     case 'mjs':
-    case 'ts':
-    case 'jsx':
-    case 'tsx':
+    case 'cjs':
       return 'javascript';
+    case 'jsx':
+      return 'jsx';
+    case 'ts':
+    case 'mts':
+      return 'typescript';
+    case 'tsx':
+      return 'tsx';
     case 'json':
       return 'json';
     case 'md':

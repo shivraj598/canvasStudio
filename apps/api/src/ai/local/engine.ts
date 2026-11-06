@@ -8,9 +8,12 @@ import type { BuildEngine } from '../types.js';
 import { getArchetype } from './archetypes.js';
 import { applyEdits, createConfigFromPrompt } from './intent.js';
 import { FONTS, SECTION_LABELS, type SiteConfig } from './model.js';
-import { APP_JS, renderSite, renderStyles } from './render.js';
+import { CONFIG_PATH, renderProject } from './project.js';
 
-export const CONFIG_PATH = 'site.config.json';
+export { CONFIG_PATH };
+
+/** Files written by the earlier static-HTML version of this engine. */
+const LEGACY_FILES = ['styles.css', 'app.js'];
 
 export interface LocalEngineOptions {
   /** Pause between streamed chunks, so the UI can show work in progress. 0 in tests. */
@@ -46,12 +49,7 @@ export function readConfig(files: ProjectFile[]): SiteConfig | null {
 }
 
 export function renderFiles(config: SiteConfig): ProjectFile[] {
-  return [
-    { path: 'index.html', content: renderSite(config) },
-    { path: 'styles.css', content: renderStyles(config) },
-    { path: 'app.js', content: APP_JS },
-    { path: CONFIG_PATH, content: `${JSON.stringify(config, null, 2)}\n` },
-  ];
+  return renderProject(config);
 }
 
 const RADIUS_WORDS = {
@@ -72,6 +70,8 @@ function planText(config: SiteConfig): string {
     `- ${RADIUS_WORDS[config.theme.radius].charAt(0).toUpperCase()}${RADIUS_WORDS[config.theme.radius].slice(1)}, subtle scroll animations`,
     '',
     `**Sections:** ${sections}`,
+    '',
+    '**Stack:** React + TypeScript + Tailwind CSS on Vite — a real project you can download and run with `npm run dev`.',
     '',
   ].join('\n');
 }
@@ -157,6 +157,12 @@ export function createLocalEngine({ delayMs = 10 }: LocalEngineOptions = {}): Bu
       const changed = renderFiles(config).filter((f) => existing.get(f.path) !== f.content);
       yield `<canvasArtifact title="${config.name.replace(/"/g, '')}">\n`;
       for (const file of changed) yield* fileAction(file, signal);
+      // Upgrading a static site from the earlier engine: remove its leftovers.
+      if (!existing.has('package.json')) {
+        for (const path of LEGACY_FILES.filter((p) => existing.has(p))) {
+          yield `<canvasAction type="delete" path="${path}"></canvasAction>\n`;
+        }
+      }
       yield `</canvasArtifact>\n`;
 
       yield* words(outro, signal);

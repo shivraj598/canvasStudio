@@ -80,7 +80,7 @@ describe('POST /api/projects/:id/chat (local engine)', () => {
     const { events } = await chat(project.id, 'Make it dark');
     const v2 = (events.at(-1) as { project: Project }).project;
     expect(v2.versions).toHaveLength(2);
-    expect(v2.messages[3]!.changes).toContainEqual({ path: 'index.html', operation: 'update' });
+    expect(v2.messages[3]!.changes).toContainEqual({ path: 'src/index.css', operation: 'update' });
     const v1 = v2.versions[0]!;
 
     const res = await app.inject({
@@ -178,6 +178,25 @@ describe('runBuild', () => {
       ],
     });
     expect(events.some((e) => e.type === 'file_start' && e.path.includes('evil'))).toBe(false);
+  });
+
+  it('adds packages the model imported but forgot to declare', async () => {
+    const result = await runBuild({
+      ...opts,
+      engine: scriptedEngine([
+        'Done. <canvasArtifact>',
+        '<canvasAction type="file" path="package.json">{"name":"x","dependencies":{"react":"^19.1.0"}}</canvasAction>',
+        '<canvasAction type="file" path="src/App.tsx">import clsx from \'clsx\';</canvasAction>',
+        '</canvasArtifact>',
+      ]),
+      project: { ...baseProject, files: [] },
+      prompt: 'build it',
+      signal: new AbortController().signal,
+      emit: () => {},
+    });
+    const pkg = result.patch.files!.find((f) => f.path === 'package.json')!;
+    expect(JSON.parse(pkg.content).dependencies.clsx).toBe('^2.1.1');
+    expect(result.patch.messages?.[1]?.content).toContain('Added `clsx` to package.json');
   });
 
   it('keeps files unchanged and explains when the engine fails', async () => {
