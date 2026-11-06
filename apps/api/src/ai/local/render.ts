@@ -205,8 +205,11 @@ function renderHero(config: SiteConfig, s: Section, t: Tokens): string {
           <span class="${t.radius.pill} ${t.accentSoft} px-2.5 py-1 text-xs font-semibold">Live</span>
         </div>
         <p class="font-heading mt-3 text-3xl ${t.headingWeight} tracking-tight">${e(card.title)}</p>
-        <div class="mt-6 h-36 overflow-hidden ${t.radius.img} bg-gradient-to-br from-${a}-${dark ? '500/30' : '200'} via-${a}-${dark ? '400/10' : '100'} to-transparent">
-          <img src="${e(image(config, 'hero', 900, 400))}" alt="" loading="lazy" class="h-full w-full object-cover opacity-90 mix-blend-${dark ? 'luminosity' : 'multiply'}" onerror="this.remove()"/>
+        <div class="relative mt-6 h-36 overflow-hidden ${t.radius.img} bg-gradient-to-br from-${a}-${dark ? '500/25' : '100'} via-${a}-${dark ? '400/10' : '50'} to-transparent">
+          <div class="absolute inset-0 hero-grid opacity-60"></div>
+          <div class="absolute inset-x-5 bottom-4 flex h-24 items-end gap-2">
+            ${[38, 62, 48, 80, 56, 92, 70].map((h, i) => `<span class="flex-1 rounded-t-md ${i === 5 ? (t.a === 'zinc' ? (dark ? 'bg-white' : 'bg-zinc-900') : `bg-${a}-500`) : `bg-${a === 'zinc' ? 'zinc' : a}-${dark ? '400/30' : '300/70'}`}" style="height:${h}%"></span>`).join('')}
+          </div>
         </div>
         <dl class="mt-6 space-y-3">
           ${card.rows.map(([k, v]) => `<div class="flex items-center justify-between border-b ${t.border} pb-3 text-sm last:border-0"><dt class="${t.muted}">${e(k)}</dt><dd class="font-semibold">${e(v)}</dd></div>`).join('')}

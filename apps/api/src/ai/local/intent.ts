@@ -497,6 +497,10 @@ export function applyEdits(current: SiteConfig, message: string): EditResult {
           config.sections.push(buildSection(kind, archetype, config.name, config.location));
           config.sections = sortByReference(config.sections);
           notes.push(`Added a ${SECTION_LABELS[kind].toLowerCase()} section`);
+        } else if (verb === 'add') {
+          notes.push(
+            `Kept the ${SECTION_LABELS[kind].toLowerCase()} section — it’s already on the page`,
+          );
         } else if (verb === 'remove' && existing !== -1) {
           config.sections.splice(existing, 1);
           notes.push(`Removed the ${SECTION_LABELS[kind].toLowerCase()} section`);
