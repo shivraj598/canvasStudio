@@ -16,10 +16,19 @@
 - [x] Offline Canvas Local engine with prompt understanding and structured edits
 - [x] Download as ZIP
 
+## Done — storage
+
+- [x] **Development database** — SQLite (`node:sqlite`) at `apps/api/.data/canvas.db` keeps
+      users, sessions and projects across `pnpm dev` restarts
+- [x] **Database** — Supabase/Postgres implementation of the `Store` interface plus the schema
+      in `supabase/migrations`. It turns on when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+      are set. It has not been tried against a live Supabase project yet.
+
 ## Next
 
+- [ ] **Connect a Supabase project** — apply the migration, set the env vars and test it live
+      (see [supabase/README.md](../supabase/README.md))
 - [ ] **OAuth sign-in** — Google and GitHub (redirect + callback in `/api/auth/:provider/*`)
-- [ ] **Database** — Supabase/Postgres implementation of the `Store` interface, migrations
 - [ ] **Visual edit mode** — click an element in the preview to target the next chat message
 - [ ] **Image uploads** in chat (screenshots and brand assets as context)
 - [ ] **Editable code view** with manual edits saved as versions

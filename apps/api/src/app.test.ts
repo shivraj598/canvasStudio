@@ -1,9 +1,12 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { buildApp } from './app.js';
+import { buildApp, createStore } from './app.js';
 import { AppError, parseOrThrow } from './errors.js';
-import { testConfig } from './test/helpers.js';
+import { bearer, signIn, testConfig } from './test/helpers.js';
 
 let app: FastifyInstance;
 
@@ -93,5 +96,67 @@ describe('CORS', () => {
       headers: { origin: 'https://evil.example' },
     });
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
+describe('store selection', () => {
+  it('builds the store named by the config', () => {
+    expect(createStore(testConfig({ store: { kind: 'memory' } })).description).toMatch(/memory/);
+    const dir = mkdtempSync(join(tmpdir(), 'canvas-app-'));
+    try {
+      const path = join(dir, 'nested', 'canvas.db');
+      const sqlite = createStore(testConfig({ store: { kind: 'sqlite', path } }));
+      expect(sqlite.description).toBe(`SQLite at ${path}`);
+      void sqlite.store.close?.();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+    const supabase = createStore(
+      testConfig({
+        store: { kind: 'supabase', url: 'https://p.supabase.co', serviceRoleKey: 'k' },
+      }),
+    );
+    expect(supabase.description).toBe('Supabase Postgres at https://p.supabase.co');
+  });
+
+  it('keeps accounts, sessions and projects across restarts with the SQLite store', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'canvas-app-'));
+    try {
+      const config = testConfig({
+        store: { kind: 'sqlite', path: join(dir, 'data', 'canvas.db') },
+      });
+
+      const first = await buildApp({ config });
+      const { token } = await signIn(first);
+      const created = await first.inject({
+        method: 'POST',
+        url: '/api/projects',
+        headers: bearer(token),
+        payload: { name: 'Sunrise Dental' },
+      });
+      expect(created.statusCode).toBe(201);
+      const renamed = await first.inject({
+        method: 'PATCH',
+        url: `/api/projects/${created.json().project.id}`,
+        headers: bearer(token),
+        payload: { name: 'Sunrise Dental Clinic' },
+      });
+      const { project } = renamed.json();
+      expect(project.name).toBe('Sunrise Dental Clinic');
+      await first.close(); // closes the database
+
+      const second = await buildApp({ config });
+      const res = await second.inject({
+        url: `/api/projects/${project.id}`,
+        headers: bearer(token),
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().project).toEqual(project);
+      const list = await second.inject({ url: '/api/projects', headers: bearer(token) });
+      expect(list.json().projects.map((p: { id: string }) => p.id)).toEqual([project.id]);
+      await second.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
