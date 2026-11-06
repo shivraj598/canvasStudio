@@ -8,10 +8,11 @@ import { loadPromptLibrary, matchDesign, parseFrontMatter } from './prompts.js';
 describe('prompt library', () => {
   const library = loadPromptLibrary();
 
-  it('loads the system prompt file with the Tailwind CDN filled in', () => {
+  it('loads the system prompt file for React + TypeScript + Tailwind projects', () => {
     expect(library.system).toContain('You are Canvas');
-    expect(library.system).not.toContain('{{TAILWIND_CDN}}');
-    expect(library.system).toContain('cdn.jsdelivr.net/npm/@tailwindcss/browser');
+    expect(library.system).toContain('React 19 + TypeScript');
+    expect(library.system).toContain('@tailwindcss/vite');
+    expect(library.system).not.toMatch(/\{\{\w+\}\}/);
   });
 
   it('loads the clinic design reference with its screenshots', () => {
