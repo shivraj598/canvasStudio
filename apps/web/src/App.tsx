@@ -5,6 +5,7 @@ import { BuilderPage } from './pages/BuilderPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { PreviewPage } from './pages/PreviewPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 
 export function App() {
@@ -16,6 +17,7 @@ export function App() {
         <Route element={<AppLayout />}>
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:id/build" element={<BuilderPage />} />
+          <Route path="/projects/:id/preview" element={<PreviewPage />} />
           <Route path="/dashboard" element={<Navigate to="/projects" replace />} />
         </Route>
       </Route>
